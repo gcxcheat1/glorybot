@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 # ============================================================
-#   main.py — DG DRIFT / FFGLORY COMPLETE SERVER + 2-BOT DUO ENGINE
+#   main.py — DG DRIFT / FFGLORY COMPLETE SERVER + 2-BOT DUO ENGINE (FULLY FIXED)
 #   • Duo Join Fix (accept_team_invite + join_team_by_code + 0500 multi-offset)
-#   • Full Web Backend for:
-#       - ffglory.html (Landing Page: / or /ffglory)
-#       - login.html / signup.html / login.js (/login, /signup)
-#       - client.html / shared.js / shared.css / sw.js (/client)
-#       - admin.html (/admin)
-#       - index.html (/bot or /index.html)
+#   • Team code robust extraction + peer wait timeout + member retry
+#   • Region obfuscation for start_match_team / ready_for_game / invite
+#   • Full Web Backend for ffglory.html, login.html, signup.html, client.html,
+#     shared.js, shared.css, sw.js, admin.html, index.html
 # ============================================================
 import sys, os, json, time, uuid, random, asyncio, base64, struct, socket
 import itertools, traceback, ssl, hmac, hashlib, string, re, subprocess
@@ -94,11 +92,22 @@ MATCH_IDLE_TIMEOUT  = 12.0
 _accept_friend_request = True
 DEBUG_ALL_PACKETS = False
 
+# ── Team/Duo config (FIXED) ────────────────────────────────
 TEAM_MODE = True
 TEAM_SIZE = 2
 TEAM_READY_DELAY = 6.0
 TEAM_INVITE_WAIT = 2.5
-CLAN_ID_DEFAULT = "3105766256"
+TEAM_PEER_WAIT_TIMEOUT = 30.0     # max wait for peers to register
+TEAM_CODE_WAIT_TIMEOUT = 25.0     # max wait for team_code on member side
+CLAN_ID_DEFAULT = "3033431593"
+
+# Region tag mapping for obfuscated team packets
+REGION_TAG_MAP = {
+    "BD": "IDC3", "IND": "IDC2", "PK": "IDC3", "ID": "IDC3",
+    "ME": "IDC4", "BR": "IDC5", "NA": "IDC5", "SG": "IDC3",
+    "VN": "IDC3", "TH": "IDC3", "TW": "IDC3", "RU": "IDC4",
+    "SAC": "IDC5", "US": "IDC5",
+}
 
 AES_KEY = bytes([89, 103, 38, 116, 99, 37, 68, 69, 117, 104, 54, 37, 90, 99, 94, 56])
 AES_IV  = bytes([54, 111, 121, 90, 68, 114, 50, 50, 69, 51, 121, 99, 104, 106, 77, 37])
@@ -236,7 +245,7 @@ _restart_state = {
     "restarting": False,
 }
 
-# ==================== PANEL DATABASE (ADMIN / CLIENT / AUTH) ====================
+# ==================== PANEL DATABASE ====================
 def _hash_pw(pw: str) -> str:
     return hashlib.sha256(("dgdrift_salt_" + str(pw)).encode("utf-8")).hexdigest()
 
@@ -336,16 +345,13 @@ async def _mark_bot_match_finished(account_id):
             return
         _restart_state["finished_bots"].add(str(account_id))
         n_done = len(_restart_state["finished_bots"])
-
         if _restart_state["target"] is None:
             active_ids = {uid for uid, a in bot_state.accounts.items()
                           if a.get("status") not in ("OFFLINE",)}
             _restart_state["target"] = max(1, min(TEAM_SIZE, len(active_ids))) if active_ids else TEAM_SIZE
             print_info(f"[RESTART] Target set to {_restart_state['target']} bots")
-
         target = _restart_state["target"]
         print_success(f"[RESTART] {account_id} match done → {n_done}/{target}")
-
         if n_done >= target:
             _restart_state["restarting"] = True
             print_warning(f"[RESTART] ✅ All {target} bots finished! Full process restart in 3s...")
@@ -379,7 +385,6 @@ def print_error(t):   print(f"{C.FAIL}[-] {t}{C.ENDC}");   bot_state.log(t, "err
 def print_warning(t): print(f"{C.WARNING}[!] {t}{C.ENDC}"); bot_state.log(t, "warning")
 def print_info(t):    print(f"{C.CYAN}[i] {t}{C.ENDC}");   bot_state.log(t, "info")
 
-# ---- For MajorRegister ----
 GGRE_RAW = bytes.fromhex(
     "47475245010101006d020000b260ee08e1f86b4c57f9c70f86bba26ed5d1436bcf52e142db3249d905eded757764991ca31a8373cdd26eab91b80f3f1f6f262f4f10b895d7b6937ddba30a27197453890e9da49373f736c679b8254e2f8e1623e91084a5fdd5374fe478ff99e010834553fddeb0bec4018d142e49df9bb236675b67e852f92a43586f7a7d4d0d7a197a1d4da32714dab4d069ad53214e2c33b3877420a12459738c4c619cbd815fa878bbd104776bb3e1ac7818d5397b04a666ac57f682763ff2df31bc2f846ddc7904f3dce1bda0c4b01f9698e9166f98c84f92640abe3f6317834a42e5c12573b46842c1a6ea8fe6ca9c006dca48a2087e1f983dfb5692771e4a0b15b337ad669b1d08b40862b176bace5331b49a767375b1a8469012aa70a67b55fe71b72478201d0b3ac7269c064c960361e92ee7ba8a42cc6b582bf9b965fb388fa9172ad44c4b073ac23c02080a6bcd106b691ffdf4c7cf71e42f2063fcf196e9bddc5e85be1fe5048eb1b31b460efbb46d76195eef9904c4cba326f2e17ff51fec17dd965aa06dadd4ab07d6966e4a7c38e8afd66dfde56c872bb87516a8f7313c797e4d80e5ad4a5f7afad95c1e0449254adae052e71a3fb98399f93ab30848e0d23252dd45e6fd41bc5fa7303dfb846a8fd713a0032a0b0ae96dfba1bbe41d20abd8099e2cb7fccc329d25bd153029139ef05d090a5093ea557693c0a8d491395b8a23ca844b3887dd5dfc29ac06f4b9be87883a793211b973465e2644c4f5de02b8ab01571401203fc2740423826858cc6da0194c195d27aac4ec4b9d23d506c1501d06440aca3fc180926d75d4a004d3dff21eb4ea1e8c86e6c9627248eff953e1d192d5c8efc006a7e512388ef2ebdb72ee3ad42d719f28e8f994e12ebf4c79f2ffe3abd7408ccd2236a7b89b2606247a732c10c4"
 )
@@ -944,7 +949,10 @@ async def ping_worker(account_id, token, release_version, region="BD", ping_url=
         print_info(f"[PING] stopped {uid_str} OK={ok_count}")
 
 
-# ==================== TEAM PACKETS (FIXED DUO JOIN) ====================
+# ==================== TEAM PACKETS (FIXED) ====================
+def _region_tag(region):
+    return REGION_TAG_MAP.get(str(region).upper(), "IDC3")
+
 def create_team(key, iv, game_version="1.132.9"):
     fields = {
         1: 1, 2: {2: bytes.fromhex("01"), 3:1, 4:3, 5:"en",
@@ -961,11 +969,11 @@ def team_fresh(account_id, key, iv):
     return create_packet(create_proto({1:72, 2:{1:int(account_id)}}).hex(), "0515", key, iv)
 
 def invite_player_in_team(target_uid, key, iv, region="BD"):
-    fields = {1: 2, 2: {1: int(target_uid), 2: str(region).upper(), 4: 1}}
+    fields = {1: 2, 2: {1: int(target_uid), 2: _region_tag(region), 4: 1}}
     return create_packet(create_proto(fields).hex(), "0515", key, iv)
 
 def accept_team_invite(inviter_uid, own_uid, group_id, key, iv, region="BD", game_version="1.132.9"):
-    reg = str(region).upper()
+    reg_tag = _region_tag(region)
     fields = {
         1: 4,
         2: {
@@ -986,7 +994,7 @@ def accept_team_invite(inviter_uid, own_uid, group_id, key, iv, region="BD", gam
                 11: "0362625351",
             },
             10: str(group_id),
-            11: {1: "IDC3", 2: 107, 3: reg},
+            11: {1: reg_tag, 2: 107, 3: str(region).upper()},
             13: "en",
             16: "374f5219",
             20: {1: 21},
@@ -998,14 +1006,14 @@ def accept_team_invite(inviter_uid, own_uid, group_id, key, iv, region="BD", gam
     return create_packet(create_proto(fields).hex(), "0515", key, iv)
 
 def join_team_by_code(team_code, key, iv, region="BD", game_version="1.132.9"):
-    reg = str(region).upper()
+    reg_tag = _region_tag(region)
     fields = {
         1: 3,
         2: {
             1: str(team_code),
             4: bytes.fromhex("0107090a0b120f19202729"),
             5: "en",
-            8: {1: "IDC3", 2: 107, 3: reg},
+            8: {1: reg_tag, 2: 107, 3: str(region).upper()},
             9: 1,
             13: 1,
             14: {
@@ -1021,12 +1029,13 @@ def join_team_by_code(team_code, key, iv, region="BD", game_version="1.132.9"):
     return create_packet(create_proto(fields).hex(), "0515", key, iv)
 
 def start_match_team(account_id, key, iv, region="BD"):
-    fields = {1:9, 2:{1:int(account_id), 7:{1:"IDC3", 2:410, 3:region}}}
+    reg_tag = _region_tag(region)
+    fields = {1: 9, 2: {1: int(account_id), 7: {1: reg_tag, 2: 410, 3: str(region).upper()}}}
     return create_packet(create_proto(fields).hex(), "0515", key, iv)
 
 def ready_for_game(uid, key, iv):
     fields = {1: 15, 2: {1: int(uid), 2: 1}}
-    return create_packet(create_proto(fields).hex(), "0519", key, iv)
+    return create_packet(create_proto(fields).hex(), "0515", key, iv)
 
 # ==================== KEY EXTRACT ====================
 def _extract_key_iv(res_json):
@@ -1342,8 +1351,6 @@ async def join_clan(jwt_token, clan_id):
         ssl_ctx.check_hostname = False; ssl_ctx.verify_mode = ssl.CERT_NONE
         async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=15)) as s:
             async with s.post(url, headers=hdrs, data=payload, ssl=ssl_ctx) as r:
-                # Read the response body so HTTP errors can be diagnosed instead
-                # of logging only the status code. Do not log auth tokens/headers.
                 response_text = await r.text(errors="replace")
                 if r.status == 200:
                     print_success(f"[CLAN] Request accepted for clan {clan_id}")
@@ -1943,7 +1950,7 @@ async def play_game(server_ip_port, thunder, sharma, udp_key, match_code,
         except Exception: pass
 
 
-# ==================== FUNCTIONAL DUO TEAM LOOP ====================
+# ==================== FUNCTIONAL DUO TEAM LOOP (FULLY FIXED) ====================
 async def functional_lone_wolf(addrs, starter_packet, account_region, client_version,
                                 key, iv, account_id="", account_data=None, max_reconnects=10):
     reconnects = 0
@@ -1980,28 +1987,23 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
                             candidates.append((5, d0))
                     except Exception:
                         pass
-
             for off in [5, 6, 10, 8, 12, 14, 4, 16, 0]:
                 if off >= len(hex_data): continue
                 try:
                     inner_bytes = bytes.fromhex(hex_data[off:])
                 except Exception: continue
-
                 decoded = None
                 try:
                     d1 = decode_protobuf_dict(inner_bytes)
                     if d1: decoded = d1
                 except Exception: pass
-
                 if not decoded:
                     try:
                         d2 = decode_protobuf_2(inner_bytes)
                         if d2: decoded = {str(k): {"data": v} for k, v in d2.items()}
                     except Exception: pass
-
                 if decoded:
                     candidates.append((off, decoded))
-
             if not candidates:
                 return
 
@@ -2041,20 +2043,17 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
                         target_uid = str(cand); break
             if not target_uid:
                 return
-
             own_acc = None
             if current_account_data:
                 own_acc = str(current_account_data.get('account_id', ''))
             if own_acc and target_uid == own_acc:
                 return
             if not _accept_friend_request or not current_account_data: return
-
             jwt_l = current_account_data.get('token')
             srv_l = current_account_data.get('server_url')
             rel_l = current_account_data.get('release_version')
             own_id = current_account_data.get('account_id')
             if not (jwt_l and srv_l and rel_l and own_id): return
-
             url = f"{srv_l.rstrip('/')}/ConfirmFriendRequest"
             fields = {"1": int(target_uid), "2": int(own_id)}
             try:
@@ -2081,13 +2080,25 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
         except Exception:
             pass
 
+    # ─────────────────────────────────────────────────────────
+    #  LEADER COORDINATOR (FIXED — never blocks forever)
+    # ─────────────────────────────────────────────────────────
     async def _team_coordinator():
         try:
+            loop = asyncio.get_running_loop()
+            wait_start = loop.time()
+
+            # FIX: wait for peers with timeout
             while True:
                 async with _team_state["lock"]:
                     n = len(_team_state["peers"])
-                if n >= TEAM_SIZE: break
-                if bot_state.is_paused(uid_str): return
+                if n >= TEAM_SIZE:
+                    break
+                if bot_state.is_paused(uid_str):
+                    return
+                if (loop.time() - wait_start) > TEAM_PEER_WAIT_TIMEOUT:
+                    print_warning(f"[TEAM] peer wait timeout ({n}/{TEAM_SIZE}) — proceeding solo leader")
+                    break
                 await asyncio.sleep(0.5)
 
             await asyncio.sleep(TEAM_READY_DELAY)
@@ -2097,7 +2108,8 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
                 peers_snapshot = dict(_team_state["peers"])
 
             if not is_leader:
-                print_info(f"[TEAM] {uid_str} waiting as member..."); return
+                print_info(f"[TEAM] {uid_str} waiting as member...")
+                return
 
             while True:
                 _am = await _get_match_count(uid_str)
@@ -2138,17 +2150,7 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
 
             await asyncio.sleep(1.0)
 
-            async def _invite_uid(target_uid, label=""):
-                for attempt in range(2):
-                    try:
-                        inv = invite_player_in_team(int(target_uid), current_key, current_iv, region=account_region)
-                        if _writer_ref["w"] and not _writer_ref["w"].is_closing():
-                            _writer_ref["w"].write(inv); await _writer_ref["w"].drain()
-                            print_info(f"[TEAM]   invite{label} to {target_uid} #{attempt+1} ({len(inv)}B)")
-                    except Exception as e:
-                        print_warning(f"[TEAM] invite err: {e}")
-                    await asyncio.sleep(0.6)
-
+            # Invite all non-leader peers
             invite_count = 0
             for peer_uid, peer_info in peers_snapshot.items():
                 if peer_uid == uid_str: continue
@@ -2157,10 +2159,18 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
                 except Exception: pass
                 if not peer_acc_id: peer_acc_id = peer_uid
                 print_success(f"[TEAM] 📨 Inviting bot{invite_count+2} {peer_acc_id}...")
-                await _invite_uid(int(peer_acc_id), f" bot{invite_count+2}")
+                for attempt in range(2):
+                    try:
+                        inv = invite_player_in_team(int(peer_acc_id), current_key, current_iv, region=account_region)
+                        if _writer_ref["w"] and not _writer_ref["w"].is_closing():
+                            _writer_ref["w"].write(inv); await _writer_ref["w"].drain()
+                            print_info(f"[TEAM]   invite bot{invite_count+2}→{peer_acc_id} #{attempt+1} ({len(inv)}B)")
+                    except Exception as e:
+                        print_warning(f"[TEAM] invite err: {e}")
+                    await asyncio.sleep(0.6)
                 invite_count += 1
 
-            await asyncio.sleep(TEAM_INVITE_WAIT + 3.0)
+            await asyncio.sleep(TEAM_INVITE_WAIT + 2.0)
 
             try:
                 pkt = team_fresh(int(own_id_num), current_key, current_iv)
@@ -2189,6 +2199,7 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
                     sm = start_match_team(int(own_id), current_key, current_iv, region=account_region)
                     if _writer_ref["w"] and not _writer_ref["w"].is_closing():
                         _writer_ref["w"].write(sm); await _writer_ref["w"].drain()
+                        print_info(f"[TEAM] 🚀 start_match_team sent ({len(sm)}B)")
                 except Exception as e:
                     print_warning(f"[TEAM] start_match err: {e}")
                 try: await asyncio.wait_for(asyncio.sleep(5.0), timeout=5.5)
@@ -2197,15 +2208,19 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
         except Exception as e:
             print_error(f"[TEAM] coordinator error: {e}")
 
+    # ─────────────────────────────────────────────────────────
+    #  MEMBER MATCH TRIGGER (FIXED — waits for team_code)
+    # ─────────────────────────────────────────────────────────
     async def _member_match_trigger():
         try:
-            await asyncio.sleep(TEAM_READY_DELAY + 6.0)
+            await asyncio.sleep(TEAM_READY_DELAY + 4.0)
             async with _team_state["lock"]:
                 if _team_state["leader_uid"] == uid_str:
                     return
-            print_success(f"[TEAM] 🚀 Member {uid_str} loop: auto-ready (every 3.5s)")
+            print_success(f"[TEAM] 🚀 Member {uid_str} loop: waiting for team_code...")
             my_id = current_account_data.get('account_id', uid_str) if current_account_data else uid_str
             joined_via_code = False
+            code_wait_start = asyncio.get_running_loop().time()
 
             while _team_active["flag"]:
                 try:
@@ -2214,9 +2229,23 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
                     if await _get_match_count(uid_str) >= MAX_CONCURRENT_MATCHES:
                         await asyncio.sleep(3.0)
                         continue
+
                     if _writer_ref["w"] and not _writer_ref["w"].is_closing():
                         async with _team_state["lock"]:
                             tc = _team_state.get("team_code")
+
+                        if not tc and not joined_via_code:
+                            if (asyncio.get_running_loop().time() - code_wait_start) > TEAM_CODE_WAIT_TIMEOUT:
+                                print_warning(f"[TEAM] member {uid_str}: team_code timeout — sending ready anyway")
+                                try:
+                                    rdy = ready_for_game(int(my_id), current_key, current_iv)
+                                    _writer_ref["w"].write(rdy)
+                                    await _writer_ref["w"].drain()
+                                except Exception:
+                                    pass
+                            await asyncio.sleep(1.0)
+                            continue
+
                         if tc and not joined_via_code:
                             try:
                                 jpkt = join_team_by_code(
@@ -2230,9 +2259,13 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
                             except Exception as e:
                                 print_warning(f"[TEAM] join_team_by_code err: {e}")
 
-                        rdy = ready_for_game(int(my_id), current_key, current_iv)
-                        _writer_ref["w"].write(rdy)
-                        await _writer_ref["w"].drain()
+                        if joined_via_code or tc:
+                            try:
+                                rdy = ready_for_game(int(my_id), current_key, current_iv)
+                                _writer_ref["w"].write(rdy)
+                                await _writer_ref["w"].drain()
+                            except Exception:
+                                pass
                 except Exception as e:
                     print_warning(f"[TEAM] member trigger: {e}")
                 try:
@@ -2244,6 +2277,9 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
         except Exception as e:
             print_warning(f"[TEAM] member trigger outer: {e}")
 
+    # ─────────────────────────────────────────────────────────
+    #  MAIN TCP LOOP
+    # ─────────────────────────────────────────────────────────
     try:
         while True:
             while bot_state.is_paused(uid_str):
@@ -2352,11 +2388,11 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
                     if hex_data.startswith("0600") and packet_length > 20:
                         await _process_social_packet(data, tag="MAIN"); continue
 
-                    # 0500: team/invite (FIXED DUO JOIN)
+                    # ── 0x0500: TEAM/INVITE (FIXED parser) ──
                     if hex_data.startswith("0500") and packet_length > 10:
                         try:
                             dec = None
-                            for off in (10, 12, 8, 6):
+                            for off in (10, 12, 8, 6, 14, 4):
                                 if len(hex_data) <= off:
                                     continue
                                 inner = bytes.fromhex(hex_data[off:])
@@ -2365,7 +2401,7 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
                                     alt = decode_protobuf_2(inner)
                                     if alt:
                                         cand = {str(k): {"data": v} for k, v in alt.items()}
-                                if cand and ("5" in cand or 5 in cand or len(cand) >= 2):
+                                if cand and (("5" in cand) or (5 in cand) or len(cand) >= 2):
                                     dec = cand
                                     break
                             if not dec:
@@ -2384,19 +2420,39 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
                                     return v["data"]
                                 return v
 
+                            # Robust team_code extraction
                             tc = None
-                            for fk in [11, 5, 1, 3, 2, 4]:
-                                cand = _f5g(fk)
-                                if cand and str(cand).isdigit() and len(str(cand)) == 7:
-                                    tc = str(cand)
-                                    break
+                            if isinstance(f5, dict):
+                                preferred = [11, 5, 1, 3, 2, 4, 6, 7, 8, 9, 10, 12]
+                                for fk in preferred:
+                                    cand = _f5g(fk)
+                                    if cand is not None and str(cand).isdigit() and 6 <= len(str(cand)) <= 8:
+                                        if len(str(cand)) == 7:
+                                            tc = str(cand)
+                                            break
+                                        if tc is None:
+                                            tc = str(cand)
+                                if not tc:
+                                    for fk, fv in list(f5.items()):
+                                        v = fv.get("data") if isinstance(fv, dict) and "data" in fv else fv
+                                        if v is not None and str(v).isdigit() and len(str(v)) == 7:
+                                            tc = str(v)
+                                            break
+                            if not tc:
+                                for fk, fv in list(dec.items()):
+                                    if str(fk).startswith("__"): continue
+                                    v = fv.get("data") if isinstance(fv, dict) and "data" in fv else fv
+                                    if v is not None and str(v).isdigit() and len(str(v)) == 7:
+                                        tc = str(v)
+                                        break
                             if tc:
                                 async with _team_state["lock"]:
                                     _team_state["team_code"] = tc
                                 print_success(f"[TEAM] 📢 Team Code captured: {tc}")
 
+                            # Extract group_id
                             group_id = None
-                            for gk in [8, 10, 9, 2]:
+                            for gk in [8, 10, 9, 2, 11]:
                                 g_cand = _f5g(gk)
                                 if isinstance(g_cand, (str, int)) and len(str(g_cand)) >= 8:
                                     if not (str(g_cand).isdigit() and len(str(g_cand)) <= 12):
@@ -2435,7 +2491,6 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
                                     except Exception as e:
                                         print_warning(f"[TEAM] accept err: {e}")
                                     await asyncio.sleep(0.4)
-
                                 try:
                                     rdy = ready_for_game(int(own_acc), current_key, current_iv)
                                     if writer and not writer.is_closing():
@@ -3048,7 +3103,6 @@ async def account_loop_token(token):
 
 # ==================== AUTO-LOAD ON STARTUP ====================
 async def _autoload_accounts():
-    """Load saved account records defensively and report malformed entries."""
     if not os.path.exists(ACCOUNTS_FILE):
         print_warning(f"[BOOT] {ACCOUNTS_FILE} not found; skipping saved-account loading")
         return
@@ -3116,7 +3170,6 @@ def _find_file(filename: str) -> Optional[str]:
             return cand
     return None
 
-# Extra JS helpers injected into shared.js so client.html works out-of-the-box
 _SHARED_JS_EXTRAS = """
 // ═══════════════ Auto-injected Client Helpers ═══════════════
 async function loadPricing() {
@@ -3226,7 +3279,6 @@ async def serve_html_file(filename: str):
     return aiohttp.web.Response(text=f"<h1>{filename} not found</h1>", content_type="text/html", status=404)
 
 async def handle_root(request):
-    # The main page opens index.html only.
     return await serve_html_file("index.html")
 
 async def handle_ffglory(request):  return await serve_html_file("ffglory.html")
@@ -3270,7 +3322,6 @@ async def handle_logo_gif(request):
         os.path.join("static", "logo.gif"),
         os.path.join("templates", "logo.gif"),
         "logo.gif",
-        r"C:\Users\pc\Desktop\Mobilesrc\ISHU_999_PREMIUM_ANIMATION.gif"
     ):
         if os.path.exists(cand):
             return aiohttp.web.FileResponse(cand)
@@ -3380,7 +3431,7 @@ async def api_me(request):
         "max_groups": u.get("max_groups", 10),
     })
 
-# ==================== ADMIN API (admin.html) ====================
+# ==================== ADMIN API ====================
 async def api_admin_overview(request):
     _, err = _require_admin(request)
     if err: return err
@@ -3591,7 +3642,7 @@ async def api_admin_join_clan(request):
         "results": results,
     })
 
-# ==================== CLIENT API (client.html) ====================
+# ==================== CLIENT API ====================
 async def api_pricing(request):
     return aiohttp.web.json_response({
         "basic_credit_usd": panel_db.settings.get("basic_credit_usd", 1.70),
@@ -3924,7 +3975,7 @@ async def api_client_active_alert(request):
 async def api_client_dismiss_alert(request):
     return aiohttp.web.json_response({"ok": True})
 
-# ==================== BOT DASHBOARD API (index.html) ====================
+# ==================== BOT DASHBOARD API ====================
 async def api_ping(request):
     return aiohttp.web.json_response({"pong": True, "app": "DG DRIFT", "version": "2.0"})
 
@@ -4149,7 +4200,6 @@ async def _req_logger(request, handler):
 async def start_web_server():
     app = aiohttp.web.Application(middlewares=[_req_logger])
 
-    # HTML Pages
     app.router.add_get("/", handle_root)
     app.router.add_get("/ffglory", handle_ffglory)
     app.router.add_get("/ffglory.html", handle_ffglory)
@@ -4164,7 +4214,6 @@ async def start_web_server():
     app.router.add_get("/signup", handle_login_pg)
     app.router.add_get("/signup.html", handle_login_pg)
 
-    # Static JS / CSS / Service Worker
     app.router.add_get("/shared.css", handle_shared_css)
     app.router.add_get("/shared.js", handle_shared_js)
     app.router.add_get("/login.js", handle_login_js)
@@ -4175,7 +4224,6 @@ async def start_web_server():
     if os.path.exists("static"):
         app.router.add_static("/static/", path="static", name="static")
 
-    # Auth & Profile API
     app.router.add_post("/api/auth/login", api_auth_login)
     app.router.add_post("/api/auth/signup", api_auth_signup)
     app.router.add_post("/api/auth/logout", api_auth_logout)
@@ -4183,7 +4231,6 @@ async def start_web_server():
     app.router.add_post("/api/auth/change-password", api_auth_change_password)
     app.router.add_get("/api/me", api_me)
 
-    # Admin Panel API
     app.router.add_get("/api/admin/overview", api_admin_overview)
     app.router.add_get("/api/admin/users", api_admin_users)
     app.router.add_post("/api/admin/user/create", api_admin_user_create)
@@ -4197,7 +4244,6 @@ async def start_web_server():
     app.router.add_post("/api/admin/join-clan", api_admin_join_clan)
     app.router.add_post("/api/admin/group-action", api_client_group_action)
 
-    # Client Panel API
     app.router.add_get("/api/pricing", api_pricing)
     app.router.add_get("/api/public/contact-info", api_public_contact_info)
     app.router.add_get("/api/vapid-public-key", api_vapid_public_key)
@@ -4225,7 +4271,6 @@ async def start_web_server():
     app.router.add_get("/api/client/active-alert", api_client_active_alert)
     app.router.add_post("/api/client/dismiss-alert", api_client_dismiss_alert)
 
-    # Bot Dashboard (index.html) API
     app.router.add_get("/api/ping", api_ping)
     app.router.add_get("/api/guildinfo", api_guildinfo)
     app.router.add_get("/api/logs", api_logs_get)
