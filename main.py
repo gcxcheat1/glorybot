@@ -4,8 +4,8 @@
 #   • Duo Join Fix (accept_team_invite + join_team_by_code + 0500 multi-offset)
 #   • Team code robust extraction + peer wait timeout + member retry
 #   • Region obfuscation for start_match_team / ready_for_game / invite
-#   • Full Web Backend for ffglory.html, login.html, signup.html, client.html,
-#     shared.js, shared.css, sw.js, admin.html, index.html
+#   • ONLY NEW BOTS: auto-load from accounts.json is DISABLED
+#   • Fresh squad guard: prevents multiple squads running simultaneously
 # ============================================================
 import sys, os, json, time, uuid, random, asyncio, base64, struct, socket
 import itertools, traceback, ssl, hmac, hashlib, string, re, subprocess
@@ -97,8 +97,8 @@ TEAM_MODE = True
 TEAM_SIZE = 2
 TEAM_READY_DELAY = 6.0
 TEAM_INVITE_WAIT = 2.5
-TEAM_PEER_WAIT_TIMEOUT = 30.0     # max wait for peers to register
-TEAM_CODE_WAIT_TIMEOUT = 25.0     # max wait for team_code on member side
+TEAM_PEER_WAIT_TIMEOUT = 30.0
+TEAM_CODE_WAIT_TIMEOUT = 25.0
 CLAN_ID_DEFAULT = "3033431593"
 
 # Region tag mapping for obfuscated team packets
@@ -338,42 +338,6 @@ class PanelDB:
         self.save()
 
 panel_db = PanelDB()
-
-async def _mark_bot_match_finished(account_id):
-    async with _restart_state["lock"]:
-        if _restart_state["restarting"]:
-            return
-        _restart_state["finished_bots"].add(str(account_id))
-        n_done = len(_restart_state["finished_bots"])
-        if _restart_state["target"] is None:
-            active_ids = {uid for uid, a in bot_state.accounts.items()
-                          if a.get("status") not in ("OFFLINE",)}
-            _restart_state["target"] = max(1, min(TEAM_SIZE, len(active_ids))) if active_ids else TEAM_SIZE
-            print_info(f"[RESTART] Target set to {_restart_state['target']} bots")
-        target = _restart_state["target"]
-        print_success(f"[RESTART] {account_id} match done → {n_done}/{target}")
-        if n_done >= target:
-            _restart_state["restarting"] = True
-            print_warning(f"[RESTART] ✅ All {target} bots finished! Full process restart in 3s...")
-            asyncio.create_task(_schedule_restart())
-
-async def _schedule_restart():
-    await asyncio.sleep(3.0)
-    print_warning("[RESTART] 🔄 Executing full process restart...")
-    try:
-        sys.stdout.flush(); sys.stderr.flush()
-    except Exception:
-        pass
-    try:
-        os.execv(sys.executable, [sys.executable] + sys.argv)
-    except Exception as e:
-        print_error(f"[RESTART] execv failed: {e}")
-        try:
-            subprocess.Popen([sys.executable] + sys.argv)
-            os._exit(0)
-        except Exception as e2:
-            print_error(f"[RESTART] subprocess fallback failed: {e2}")
-            os._exit(1)
 
 # ==================== PRINT HELPERS ====================
 class C:
@@ -2088,7 +2052,6 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
             loop = asyncio.get_running_loop()
             wait_start = loop.time()
 
-            # FIX: wait for peers with timeout
             while True:
                 async with _team_state["lock"]:
                     n = len(_team_state["peers"])
@@ -2150,7 +2113,6 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
 
             await asyncio.sleep(1.0)
 
-            # Invite all non-leader peers
             invite_count = 0
             for peer_uid, peer_info in peers_snapshot.items():
                 if peer_uid == uid_str: continue
@@ -2388,7 +2350,6 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
                     if hex_data.startswith("0600") and packet_length > 20:
                         await _process_social_packet(data, tag="MAIN"); continue
 
-                    # ── 0x0500: TEAM/INVITE (FIXED parser) ──
                     if hex_data.startswith("0500") and packet_length > 10:
                         try:
                             dec = None
@@ -2420,7 +2381,6 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
                                     return v["data"]
                                 return v
 
-                            # Robust team_code extraction
                             tc = None
                             if isinstance(f5, dict):
                                 preferred = [11, 5, 1, 3, 2, 4, 6, 7, 8, 9, 10, 12]
@@ -2450,7 +2410,6 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
                                     _team_state["team_code"] = tc
                                 print_success(f"[TEAM] 📢 Team Code captured: {tc}")
 
-                            # Extract group_id
                             group_id = None
                             for gk in [8, 10, 9, 2, 11]:
                                 g_cand = _f5g(gk)
@@ -3101,67 +3060,11 @@ async def account_loop_token(token):
     except Exception as e:
         print_error(f"[TOKEN] {e}")
 
-# ==================== AUTO-LOAD ON STARTUP ====================
+# ==================== AUTO-LOAD (DISABLED) ====================
 async def _autoload_accounts():
-    if not os.path.exists(ACCOUNTS_FILE):
-        print_warning(f"[BOOT] {ACCOUNTS_FILE} not found; skipping saved-account loading")
-        return
-
-    try:
-        with open(ACCOUNTS_FILE, "r", encoding="utf-8") as f:
-            accounts = json.load(f)
-    except json.JSONDecodeError as e:
-        print_error(f"[BOOT] Invalid JSON in {ACCOUNTS_FILE} at line {e.lineno}, column {e.colno}")
-        return
-    except OSError as e:
-        print_error(f"[BOOT] Could not read {ACCOUNTS_FILE}: {e}")
-        return
-
-    if not isinstance(accounts, list):
-        print_error(f"[BOOT] {ACCOUNTS_FILE} must contain a JSON list; got {type(accounts).__name__}")
-        return
-    if not accounts:
-        print_warning(f"[BOOT] {ACCOUNTS_FILE} contains no saved accounts")
-        return
-
-    seen_uids = set()
-    loaded = 0
-    skipped = 0
-    print_success(f"[BOOT] Checking {len(accounts)} saved account record(s)")
-    for i, a in enumerate(accounts, start=1):
-        try:
-            if not isinstance(a, dict):
-                print_warning(f"[BOOT] Skipping record {i}: expected an object")
-                skipped += 1
-                continue
-            uid = str(a.get("uid", "")).strip()
-            password = str(a.get("password", "")).strip()
-            region = str(a.get("region", "")).strip() or None
-            clan_id = str(a.get("clan_id", "")).strip() or CLAN_ID_DEFAULT
-            if not uid or not password:
-                print_warning(f"[BOOT] Skipping record {i}: uid/password missing")
-                skipped += 1
-                continue
-            if uid in seen_uids:
-                print_warning(f"[BOOT] Skipping duplicate UID in record {i}")
-                skipped += 1
-                continue
-            seen_uids.add(uid)
-            existing_task = bot_state.account_workers.get(uid)
-            if existing_task is not None and not existing_task.done():
-                print_warning(f"[BOOT] Skipping UID already running (record {i})")
-                skipped += 1
-                continue
-            task = asyncio.create_task(account_loop_guest(
-                uid, password, region_override=region, clan_override=clan_id))
-            bot_state.account_workers[uid] = task
-            loaded += 1
-            await asyncio.sleep(0.5)
-        except Exception as e:
-            print_error(f"[BOOT] Record {i} failed validation: {type(e).__name__}: {e}")
-            skipped += 1
-
-    print_success(f"[BOOT] Saved-account check complete: loaded={loaded}, skipped={skipped}")
+    """DISABLED: Only freshly-created bots should run."""
+    print_info("[BOOT] Auto-load from accounts.json is DISABLED — only new bots will run")
+    return
 
 # ==================== TEMPLATE & STATIC FILE SERVING ====================
 def _find_file(filename: str) -> Optional[str]:
@@ -4071,6 +3974,15 @@ async def api_create_team(request):
             return aiohttp.web.json_response({"ok": False, "error": "clan_id required"})
         if bot_state.creating:
             return aiohttp.web.json_response({"ok": False, "error": "already creating"})
+
+        # ── Guard: prevent multiple squads running simultaneously ──
+        existing_active = [u for u, t in bot_state.account_workers.items() if t and not t.done()]
+        if existing_active:
+            return aiohttp.web.json_response({
+                "ok": False,
+                "error": f"{len(existing_active)} bot(s) already running. Delete them from UI first before creating a new squad."
+            })
+
         asyncio.create_task(create_four_accounts(region, clan_id, count, password))
         return aiohttp.web.json_response({"ok": True, "msg": f"creating {count} bots for {region}"})
     except Exception as e:
@@ -4307,10 +4219,10 @@ async def main():
         print_error(f"[WEB] {e}")
         return
 
-    try:
-        await _autoload_accounts()
-    except Exception as e:
-        print_error(f"[BOOT] autoload failed: {e}")
+    # ── AUTO-LOAD DISABLED ──
+    # Only newly-created bots from Create Squad will run.
+    # _autoload_accounts() is intentionally NOT called.
+    print_info("[BOOT] ✓ Auto-load disabled — waiting for Create Squad to spawn fresh bots")
 
     try:
         while True:
