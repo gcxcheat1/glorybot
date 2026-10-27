@@ -1,0 +1,87 @@
+{
+  "users": {
+    "admin": {
+      "username": "admin",
+      "display_name": "Admin",
+      "password_hash": "405879d377fd78c939fcdc7c4a1cde7b17f3e6acb2a0ae9626b8acde112fc717",
+      "role": "admin",
+      "basic_credits": 1000,
+      "premium_credits": 1000,
+      "max_groups": 20,
+      "created_at": 1792874926
+    },
+    "999x": {
+      "username": "999x",
+      "display_name": "999X",
+      "password_hash": "b0f602f8d42353d1c0b5e685b7a5699b898c18f6d7a18d8376c104c57bafb6d0",
+      "role": "admin",
+      "basic_credits": 999999,
+      "premium_credits": 999999,
+      "max_groups": 100,
+      "created_at": 1792874926
+    }
+  },
+  "sessions": {
+    "2284d337ddcf451491edc65b1c037649": "999x",
+    "a6cddb27988e4e4394bc8ffee5888d6e": "999x",
+    "fc4fc1e36115472594d1e383f7284e17": "999x",
+    "e8e57947841243199ac027db1d5c50b9": "999x"
+  },
+  "coupons": {},
+  "transactions": [],
+  "groups": {},
+  "activity_log": [],
+  "inbox": [],
+  "settings": {
+    "basic_credit_usd": 1.7,
+    "premium_credit_usd": 20.0,
+    "binance_pay_id": "854729104",
+    "discord": "https://discord.gg/uFFd8c7B5A",
+    "support": "https://discord.gg/uFFd8c7B5A",
+    "vapid_public_key": "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U",
+    "regions": [
+      {
+        "id": "ind",
+        "region_name": "India",
+        "code": "IND",
+        "tier": "basic",
+        "enabled": true
+      },
+      {
+        "id": "bd",
+        "region_name": "Bangladesh",
+        "code": "BD",
+        "tier": "basic",
+        "enabled": true
+      },
+      {
+        "id": "pk",
+        "region_name": "Pakistan",
+        "code": "PK",
+        "tier": "basic",
+        "enabled": true
+      },
+      {
+        "id": "id",
+        "region_name": "Indonesia",
+        "code": "ID",
+        "tier": "basic",
+        "enabled": true
+      },
+      {
+        "id": "me",
+        "region_name": "Middle East",
+        "code": "ME",
+        "tier": "premium",
+        "enabled": true
+      },
+      {
+        "id": "br",
+        "region_name": "Brasil",
+        "code": "BR",
+        "tier": "premium",
+        "enabled": true
+      }
+    ]
+  }
+}

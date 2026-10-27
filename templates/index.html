@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<title>ISHU X 999</title>
+<link rel="icon" type="image/gif" href="/static/logo.gif">
+<link rel="shortcut icon" type="image/gif" href="/static/logo.gif">
+<link rel="apple-touch-icon" href="/static/logo.gif">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800&family=Orbitron:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<style>
+:root {
+    --bg: #070204;
+    --bg-dark: #040102;
+    --surface: rgba(18, 6, 10, 0.85);
+    --surface-solid: #12060a;
+    --surface-2: rgba(28, 10, 16, 0.8);
+    --surface-3: #260c14;
+    --border: rgba(255, 35, 75, 0.16);
+    --border-glow: rgba(255, 45, 85, 0.5);
+    --red-primary: #ff1e42;
+    --red-glow: #ff2d55;
+    --red-deep: #b30021;
+    --red-gradient: linear-gradient(135deg, #ff1e42 0%, #b30021 50%, #680011 100%);
+    --discord: #5865F2;
+    --discord-glow: rgba(88, 101, 242, 0.45);
+    --gold: #f59e0b;
+    --lime: #10b981;
+    --cyan: #06b6d4;
+    --white: #ffffff;
+    --white-dim: rgba(255, 255, 255, 0.72);
+    --white-muted: rgba(255, 255, 255, 0.38);
+    --r-sm: 10px;
+    --r-md: 16px;
+    --r-lg: 22px;
+    --r-xl: 28px;
+    --nav-h: 72px;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+    min-height: 100%;
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* BACKGROUND ATMOSPHERE */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background: 
+        radial-gradient(circle 800px at 15% -10%, rgba(255, 30, 66, 0.18), transparent 60%),
+        radial-gradient(circle 700px at 85% 20%, rgba(179, 0, 33, 0.15), transparent 60%),
+        radial-gradient(circle 900px at 50% 110%, rgba(88, 101, 242, 0.10), transparent 70%);
+    pointer-events: none;
+    animation: crimsonPulse 12s ease-in-out infinite alternate;
+}
+
+@keyframes crimsonPulse {
+    0% { transform: scale(1) translateY(0); opacity: 0.85; }
+    100% { transform: scale(1.08) translateY(-15px); opacity: 1; }
+}
+
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: 
+        linear-gradient(rgba(255, 30, 66, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 30, 66, 0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+}
+
+#app {
+    display: none;
+    position: relative;
+    z-index: 1;
+}
+
+.shell {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 18px 20px calc(var(--nav-h) + 24px);
+}
+
+/* TOPBAR */
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 22px;
+    border-radius: var(--r-xl);
+    background: var(--surface);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(255, 30, 66, 0.08);
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.topbar::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--red-primary), var(--gold), transparent);
+}
+
+.brand-block {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.brand-avatar-wrap {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+}
+
+.brand-avatar-ring {
+    position: absolute;
+    inset: -3px;
+    border-radius: 18px;
+    background: conic-gradient(from 0deg, var(--red-primary), #ff758c, var(--discord), var(--red-primary));
+    animation: spinRing 5s linear infinite;
+    filter: drop-shadow(0 0 12px rgba(255, 30, 66, 0.5));
+}
+
+@keyframes spinRing {
+    to { transform: rotate(360deg); }
+}
+
+.brand-avatar-core {
+    position: absolute;
+    inset: 2px;
+    border-radius: 16px;
+    background: #000;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.brand-avatar-core img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.brand-text h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    background: linear-gradient(90deg, #ffffff, #ffb8c6, #ff2d55);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.brand-sub {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 3px;
+    font-size: 11px;
+    color: var(--white-muted);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    flex-wrap: wrap;
+}
+
+.bot-id-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 800;
+    background: rgba(255, 30, 66, 0.15);
+    border: 1px solid rgba(255, 30, 66, 0.35);
+    color: #ff99aa;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.live-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--lime);
+    background: rgba(16, 185, 129, 0.12);
+    padding: 3px 8px;
+    border-radius: 100px;
+    border: 1px solid rgba(16, 185, 129, 0.28);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.live-pill .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--lime);
+    box-shadow: 0 0 8px var(--lime);
+    animation: livePulse 1.4s infinite;
+}
+
+@keyframes livePulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.65); }
+}
+
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* BUTTONS */
+.btn {
+    padding: 11px 18px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--white);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.22s cubic-bezier(0.2, 0.9, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn:hover {
+    background: var(--surface-3);
+    border-color: var(--border-glow);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(255, 30, 66, 0.25);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn-primary {
+    background: var(--red-gradient);
+    border: 1px solid rgba(255, 75, 105, 0.5);
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(255, 30, 66, 0.35);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #ff3355 0%, #d60029 50%, #800016 100%);
+    box-shadow: 0 8px 28px rgba(255, 30, 66, 0.5);
+}
+
+.btn-discord {
+    background: var(--discord);
+    border: 1px solid rgba(136, 148, 255, 0.5);
+    color: #fff !important;
+    box-shadow: 0 6px 20px var(--discord-glow);
+}
+
+.btn-discord:hover {
+    background: #4752c4;
+    border-color: #9aa4ff;
+    box-shadow: 0 8px 26px rgba(88, 101, 242, 0.7);
+    transform: translateY(-2px);
+}
+
+.btn-cert {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #fcd34d;
+}
+
+.btn-cert:hover {
+    background: rgba(245, 158, 11, 0.2);
+    border-color: rgba(245, 158, 11, 0.6);
+}
+
+.btn-danger {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #f87171;
+}
+
+/* STATS ROW */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.stat-card {
+    padding: 20px 18px;
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.25s ease;
+}
+
+.stat-card:hover {
+    border-color: var(--border-glow);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(255, 30, 66, 0.15);
+}
+
+.stat-card::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--red-primary);
+    box-shadow: 0 0 12px var(--red-primary);
+}
+
+.stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.stat-label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: var(--white-muted);
+    text-transform: uppercase;
+}
+
+.stat-icon {
+    font-size: 16px;
+    color: var(--red-primary);
+}
+
+.stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--white);
+    line-height: 1.1;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+}
+
+.stat-foot {
+    font-size: 11px;
+    color: var(--white-dim);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.stat-foot .highlight-green {
+    color: var(--lime);
+    font-weight: 700;
+}
+
+/* SECTION HEAD */
+.section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.section-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-transform: uppercase;
+}
+
+.section-title i {
+    color: var(--red-primary);
+    font-size: 18px;
+}
+
+/* SLOTS GRID */
+.slots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.slot-card {
+    background: var(--surface);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    border-radius: var(--r-xl);
+    padding: 22px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.2, 0.9, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.slot-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 30, 66, 0.6), transparent);
+    opacity: 0.6;
+}
+
+.slot-card:hover {
+    border-color: var(--border-glow);
+    transform: translateY(-4px);
+    box-shadow: 0 16px 45px rgba(0, 0, 0, 0.6), 0 0 30px rgba(255, 30, 66, 0.2);
+}
+
+.slot-card.active {
+    border-color: var(--red-primary);
+    box-shadow: 0 0 35px rgba(255, 30, 66, 0.35);
+}
+
+.slot-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.slot-title {
+    font-size: 17px;
+    font-weight: 900;
+    color: var(--white);
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 0.5px;
+}
+
+.slot-guild {
+    font-size: 12px;
+    color: #ff859d;
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(255, 30, 66, 0.12);
+    padding: 4px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 30, 66, 0.25);
+}
+
+.slot-members {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.member-av {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: var(--white-muted);
+    font-weight: 800;
+    position: relative;
+    font-family: 'JetBrains Mono', monospace;
+    transition: all 0.2s;
+}
+
+.member-av.online {
+    border-color: var(--lime);
+    color: var(--lime);
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+}
+
+.member-av.match {
+    border-color: var(--red-primary);
+    color: var(--red-primary);
+    box-shadow: 0 0 12px rgba(255, 30, 66, 0.3);
+}
+
+.slot-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--white-muted);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 14px;
+}
+
+.slot-footer span:last-child {
+    color: var(--red-primary);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* BOT DETAILS PANEL */
+.bot-details-panel {
+    display: none;
+    background: var(--surface);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border-glow);
+    border-radius: var(--r-xl);
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.8), 0 0 40px rgba(255, 30, 66, 0.2);
+    animation: slideDown 0.35s cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.bot-details-panel.active {
+    display: block;
+}
+
+.bot-details-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+}
+
+.bot-details-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 19px;
+    font-weight: 900;
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.bot-details-title i {
+    color: var(--red-primary);
+}
+
+/* ACCOUNT CARDS INSIDE DETAILS */
+.account-card {
+    padding: 20px;
+    margin-bottom: 14px;
+    border-radius: var(--r-lg);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    transition: all 0.22s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.account-card:hover {
+    border-color: var(--border-glow);
+    background: var(--surface-3);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.account-card::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--red-gradient);
+}
+
+.acc-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.acc-id {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.acc-avatar {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    flex-shrink: 0;
+}
+
+.acc-avatar-core {
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    background: #000;
+    border: 1px solid var(--border-glow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--red-primary);
+    font-size: 20px;
+    box-shadow: 0 0 15px rgba(255, 30, 66, 0.25);
+}
+
+.acc-level {
+    position: absolute;
+    right: -6px;
+    bottom: -6px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 900;
+    font-family: 'JetBrains Mono', monospace;
+    color: #fff;
+    background: var(--red-primary);
+    border: 2px solid #000;
+    box-shadow: 0 0 8px rgba(255, 30, 66, 0.6);
+}
+
+.acc-name {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--white);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.acc-region {
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 0.8px;
+    color: #ff99aa;
+    background: rgba(255, 30, 66, 0.15);
+    border: 1px solid rgba(255, 30, 66, 0.3);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.acc-uid {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 5px;
+    color: var(--white-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    font-family: 'JetBrains Mono', monospace;
+    border: 1px solid;
+    text-transform: uppercase;
+}
+
+.status-pill .sdot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 8px currentColor;
+}
+
+.status-pill.online {
+    color: var(--lime);
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.status-pill.match {
+    color: var(--red-primary);
+    background: rgba(255, 30, 66, 0.15);
+    border-color: rgba(255, 30, 66, 0.4);
+    box-shadow: 0 0 15px rgba(255, 30, 66, 0.25);
+}
+
+.status-pill.search {
+    color: var(--gold);
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.status-pill.paused {
+    color: #94a3b8;
+    background: rgba(148, 163, 184, 0.12);
+    border-color: rgba(148, 163, 184, 0.3);
+}
+
+.acc-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.metric-box {
+    padding: 12px 14px;
+    border-radius: var(--r-sm);
+    background: var(--surface-solid);
+    border: 1px solid var(--border);
+}
+
+.metric-box span {
+    display: block;
+    color: var(--white-muted);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.metric-box strong {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--white);
+}
+
+.metric-box.gain strong {
+    color: var(--lime);
+    text-shadow: 0 0 10px rgba(16, 185, 129, 0.35);
+}
+
+/* CONSOLE PANEL */
+.console-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 440px;
+    background: var(--surface);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    border-radius: var(--r-xl);
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+}
+
+.console-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(18, 6, 10, 0.5);
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.console-head h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.8px;
+}
+
+.console-head h3 i {
+    color: var(--red-primary);
+}
+
+.console-body {
+    flex: 1;
+    margin: 14px 18px;
+    padding: 16px;
+    border-radius: var(--r-md);
+    background: #020102;
+    border: 1px solid rgba(255, 30, 66, 0.1);
+    overflow-y: auto;
+    max-height: 380px;
+    font: 11px/1.8 'JetBrains Mono', monospace;
+}
+
+.log-line {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 4px;
+    word-break: break-word;
+}
+
+.log-ts {
+    color: rgba(255, 255, 255, 0.28);
+    flex-shrink: 0;
+    font-weight: 600;
+}
+
+.log-msg {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.log-msg.success { color: var(--lime); }
+.log-msg.warning { color: var(--gold); }
+.log-msg.error { color: #f87171; }
+.log-msg.info { color: #38bdf8; }
+
+/* MODALS */
+.modal-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 5000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(4, 1, 2, 0.88);
+    backdrop-filter: blur(20px);
+    overflow-y: auto;
+}
+
+.modal-bg.active {
+    display: flex;
+}
+
+.modal-card {
+    width: 100%;
+    max-width: 520px;
+    padding: 32px 28px;
+    border-radius: var(--r-xl);
+    background: linear-gradient(160deg, #18070d 0%, #0d0306 100%);
+    border: 1px solid var(--border-glow);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.9), 0 0 50px rgba(255, 30, 66, 0.25);
+    animation: modalRise 0.3s cubic-bezier(0.2, 0.9, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 20%;
+    right: 20%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--red-primary), var(--discord), transparent);
+}
+
+@keyframes modalRise {
+    from { opacity: 0; transform: scale(0.95) translateY(20px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.modal-head h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--white-muted);
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close:hover {
+    color: var(--white);
+    border-color: var(--border-glow);
+    background: var(--surface-3);
+}
+
+.field-block {
+    margin-bottom: 18px;
+}
+
+.field-block label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--white-muted);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+.field-input, .field-select {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--border);
+    background: rgba(10, 3, 5, 0.8);
+    color: var(--white);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: all 0.22s ease;
+}
+
+.field-input:focus, .field-select:focus {
+    border-color: var(--red-primary);
+    box-shadow: 0 0 15px rgba(255, 30, 66, 0.3);
+    background: rgba(20, 6, 12, 0.9);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+}
+
+.modal-actions .btn {
+    flex: 1;
+    justify-content: center;
+}
+
+/* CERTIFICATE MODAL CONTENT */
+.cert-seal {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.25), transparent);
+    border: 2px dashed rgba(245, 158, 11, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    color: #f59e0b;
+}
+
+.cert-badge-box {
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    border-radius: var(--r-md);
+    padding: 16px;
+    margin-bottom: 16px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.cert-badge-box strong {
+    color: #fcd34d;
+    display: block;
+    margin-bottom: 4px;
+    font-size: 13px;
+}
+
+.cert-meta-row {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--white-muted);
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cert-meta-row span:last-child {
+    color: var(--white);
+    font-weight: 700;
+}
+
+/* FOOTER */
+.app-footer {
+    margin-top: 36px;
+    padding: 24px 20px;
+    border-radius: var(--r-xl);
+    background: var(--surface);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--white-muted);
+}
+
+.footer-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 800;
+    color: var(--white);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+}
+
+.footer-brand img {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+}
+
+.footer-copy {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+}
+
+.footer-copy b {
+    color: var(--red-primary);
+}
+
+/* LOGIN SCREEN */
+#login-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: radial-gradient(circle at center, rgba(30, 8, 14, 0.96) 0%, rgba(4, 1, 2, 0.98) 100%);
+    backdrop-filter: blur(30px);
+}
+
+.login-card {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    padding: 44px 34px;
+    border-radius: 32px;
+    background: linear-gradient(160deg, rgba(26, 8, 15, 0.92) 0%, rgba(10, 3, 5, 0.98) 100%);
+    border: 1px solid var(--border-glow);
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.9), 0 0 60px rgba(255, 30, 66, 0.25);
+    text-align: center;
+    animation: loginRise 0.6s cubic-bezier(0.2, 0.9, 0.2, 1);
+    overflow: hidden;
+}
+
+.login-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 15%;
+    right: 15%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--red-primary), var(--gold), transparent);
+}
+
+@keyframes loginRise {
+    from { opacity: 0; transform: translateY(30px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.login-logo-wrap {
+    position: relative;
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 20px;
+}
+
+.login-logo-ring {
+    position: absolute;
+    inset: -4px;
+    border-radius: 30px;
+    background: conic-gradient(from 0deg, var(--red-primary), #ff6b8b, var(--discord), var(--red-primary));
+    animation: spinRing 6s linear infinite;
+    filter: drop-shadow(0 0 16px rgba(255, 30, 66, 0.6));
+}
+
+.login-logo-core {
+    position: absolute;
+    inset: 3px;
+    border-radius: 27px;
+    background: #000;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-logo-core img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.login-brand-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    background: linear-gradient(90deg, #ffffff, #ffb8c6, #ff2d55);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 4px;
+}
+
+.login-brand-sub {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: var(--white-muted);
+    text-transform: uppercase;
+    margin-bottom: 28px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.login-brand-sub span {
+    color: var(--red-primary);
+}
+
+.login-field-wrap {
+    position: relative;
+    margin-bottom: 14px;
+    text-align: left;
+}
+
+.login-field-wrap i {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--white-muted);
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+.login-input {
+    width: 100%;
+    padding: 15px 16px 15px 46px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--border);
+    background: rgba(12, 4, 7, 0.85);
+    color: var(--white);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: all 0.22s ease;
+}
+
+.login-input:focus {
+    border-color: var(--red-primary);
+    box-shadow: 0 0 18px rgba(255, 30, 66, 0.35);
+    background: rgba(22, 6, 13, 0.95);
+}
+
+.login-input:focus + i {
+    color: var(--red-primary);
+}
+
+#login-error {
+    min-height: 20px;
+    margin: 8px 0 12px;
+    color: #f87171;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.discord-support-link {
+    margin-top: 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #8da0ff;
+    text-decoration: none;
+    font-weight: 700;
+    transition: 0.2s;
+}
+
+.discord-support-link:hover {
+    color: #fff;
+    text-shadow: 0 0 10px rgba(88, 101, 242, 0.8);
+}
+
+@media(max-width: 900px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .slots-grid { grid-template-columns: 1fr; }
+    .topbar { flex-direction: column; align-items: stretch; }
+    .topbar-actions { justify-content: stretch; }
+    .topbar-actions .btn { flex: 1; justify-content: center; }
+    .app-footer { flex-direction: column; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<section id="login-screen">
+    <div class="login-card">
+        <div class="login-logo-wrap">
+            <div class="login-logo-ring"></div>
+            <div class="login-logo-core">
+                <img src="/static/logo.gif" alt="ISHU Logo" onerror="this.onerror=null;this.src='/logo.gif';">
+            </div>
+        </div>
+        <div class="login-brand-title">ISHU X 999</div>
+        <div class="login-brand-sub">Guild Glory <span>Automation Engine</span></div>
+
+        <form onsubmit="handleLoginSubmit(event)">
+            <div class="login-field-wrap">
+                <input id="login-username" class="login-input" type="text" placeholder="Username" autocomplete="username" required>
+                <i class="fa-solid fa-user"></i>
+            </div>
+            <div class="login-field-wrap">
+                <input id="login-password" class="login-input" type="password" placeholder="Password" autocomplete="current-password" required>
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <div id="login-error"></div>
+            <button class="btn btn-primary" style="width:100%;padding:16px;justify-content:center;font-size:13px;" type="submit">
+                <i class="fa-solid fa-shield-halved"></i> Authorize & Enter
+            </button>
+        </form>
+
+        <div style="margin-top:20px;display:flex;justify-content:center;gap:16px;flex-wrap:wrap;">
+            <a href="https://discord.gg/uFFd8c7B5A" target="_blank" class="discord-support-link">
+                <i class="fa-brands fa-discord"></i> Official Discord Support
+            </a>
+            <span style="color:var(--white-muted);">•</span>
+            <span style="font-size:11px;color:var(--gold);cursor:pointer;" onclick="openCertModal()">
+                <i class="fa-solid fa-certificate"></i> Educational Compliance
+            </span>
+        </div>
+    </div>
+</section>
+
+<!-- MAIN APP -->
+<div id="app">
+    <div class="shell">
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <div class="brand-block">
+                <div class="brand-avatar-wrap">
+                    <div class="brand-avatar-ring"></div>
+                    <div class="brand-avatar-core">
+                        <img src="/static/logo.gif" alt="ISHU Logo" onerror="this.onerror=null;this.src='/logo.gif';">
+                    </div>
+                </div>
+                <div class="brand-text">
+                    <h1>ISHU X 999</h1>
+                    <div class="brand-sub">
+                        <span>GUILD BOT IDENTITY:</span>
+                        <span class="bot-id-pill"><i class="fa-solid fa-robot"></i> DISHA X ISHU</span>
+                        <span class="live-pill"><span class="dot"></span> LIVE 24/7</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="topbar-actions">
+                <a href="https://discord.gg/uFFd8c7B5A" target="_blank" class="btn btn-discord">
+                    <i class="fa-brands fa-discord"></i> Discord Support
+                </a>
+                <button class="btn btn-cert" onclick="openCertModal()">
+                    <i class="fa-solid fa-award"></i> Certificate
+                </button>
+                <button class="btn btn-primary" onclick="openCreateTeamModal()">
+                    <i class="fa-solid fa-plus-circle"></i> Create Squad
+                </button>
+                <button class="btn btn-danger" onclick="logoutSession()">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+                </button>
+            </div>
+        </header>
+
+        <!-- STATS CARDS -->
+        <section class="stats">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Bot Fleet (DISHA)</span>
+                    <i class="fa-solid fa-robot stat-icon"></i>
+                </div>
+                <div class="stat-value" id="stat-accounts">0</div>
+                <div class="stat-foot"><span class="highlight-green" id="stat-online">0 Online</span> • Ready</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Total Matches</span>
+                    <i class="fa-solid fa-gamepad stat-icon"></i>
+                </div>
+                <div class="stat-value" id="stat-completed">0</div>
+                <div class="stat-foot"><span class="highlight-green" id="stat-active-matches">0 Active</span> in matchmaking</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">EXP Gained</span>
+                    <i class="fa-solid fa-bolt stat-icon"></i>
+                </div>
+                <div class="stat-value" id="stat-exp">+0</div>
+                <div class="stat-foot">Real-time level progression</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Cloud State</span>
+                    <i class="fa-solid fa-server stat-icon"></i>
+                </div>
+                <div class="stat-value" style="font-size:22px;color:var(--lime);">OPTIMAL</div>
+                <div class="stat-foot">Support: Discord Only</div>
+            </div>
+        </section>
+
+        <!-- SQUAD SLOTS SECTION -->
+        <section>
+            <div class="section-head">
+                <div class="section-title">
+                    <i class="fa-solid fa-users-viewfinder"></i> Active Squad Deployments (DISHA X ISHU)
+                </div>
+                <button class="btn" onclick="fetchStats()">
+                    <i class="fa-solid fa-rotate"></i> Refresh State
+                </button>
+            </div>
+
+            <!-- BOT DETAILS PANEL -->
+            <div id="bot-details-panel" class="bot-details-panel">
+                <div class="bot-details-head">
+                    <div class="bot-details-title" id="details-title">
+                        <i class="fa-solid fa-shield"></i> Squad Details
+                    </div>
+                    <button class="modal-close" onclick="closeDetails()"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div id="details-accounts-container"></div>
+            </div>
+
+            <div id="slots-grid" class="slots-grid"></div>
+        </section>
+
+        <!-- LIVE CONSOLE LOGS -->
+        <section class="console-panel">
+            <div class="console-head">
+                <h3><i class="fa-solid fa-terminal"></i> Live Cloud Engine Stream</h3>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn" style="padding:7px 12px;font-size:11px;" onclick="clearLogs()">
+                        <i class="fa-solid fa-trash-can"></i> Clear
+                    </button>
+                </div>
+            </div>
+            <div id="console-stream" class="console-body"></div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="app-footer">
+            <div class="footer-brand">
+                <img src="/static/logo.gif" alt="ISHU Logo" onerror="this.onerror=null;this.src='/logo.gif';">
+                <span>ISHU X 999 • DISHA X ISHU</span>
+            </div>
+            <div class="footer-copy">
+                Copyright © 2026 <b>ISHU X 999</b>. All Rights Reserved.
+            </div>
+            <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+                <a href="https://discord.gg/uFFd8c7B5A" target="_blank" style="color:#8da0ff;text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:6px;">
+                    <i class="fa-brands fa-discord"></i> Support Discord
+                </a>
+                <span class="live-pill"><span class="dot"></span> 24/7 ONLINE</span>
+                <span style="font-size:11px;color:var(--gold);cursor:pointer;" onclick="openCertModal()"><i class="fa-solid fa-certificate"></i> Educational Compliance</span>
+            </div>
+        </footer>
+    </div>
+</div>
+
+<!-- CREATE TEAM MODAL -->
+<div id="team-modal" class="modal-bg">
+    <div class="modal-card">
+        <div class="modal-head">
+            <h3><i class="fa-solid fa-bolt" style="color:var(--red-primary);"></i> Launch New Squad</h3>
+            <button class="modal-close" onclick="closeCreateTeamModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form onsubmit="submitCreateTeam(event)">
+            <div class="field-block">
+                <label>Target Region</label>
+                <select id="team-region" class="field-select">
+                    <option value="IND" selected>India (IND)</option>
+                    <option value="BD">Bangladesh (BD)</option>
+                    <option value="PK">Pakistan (PK)</option>
+                    <option value="ID">Indonesia (ID)</option>
+                    <option value="ME">Middle East (ME)</option>
+                    <option value="BR">Brasil (BR)</option>
+                </select>
+            </div>
+            <div class="field-block">
+                <label>Clan / Guild ID</label>
+                <input id="team-clan" class="field-input" type="text" placeholder="e.g. 3055092344" required>
+            </div>
+            <div class="field-block">
+                <label>Bot Identity & Random ID Generation</label>
+                <input class="field-input" type="text" value="DISHA X ISHU (Random: DISHA-XXXXXX)" readonly style="opacity:0.85;cursor:not-allowed;">
+                <p style="font-size:10.5px;color:#ff99aa;margin-top:5px;font-family:'JetBrains Mono',monospace;">
+                    ✓ Every bot created gets a unique <b>DISHA-XXXXXX</b> random number ID automatically!
+                </p>
+            </div>
+            <div class="field-block">
+                <label>Bots in Duo Unit</label>
+                <select id="team-count" class="field-select">
+                    <option value="2" selected>2 Bots (Duo Mode)</option>
+                    <option value="1">1 Bot (Solo Mode)</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn" onclick="closeCreateTeamModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="btn-create-team">
+                    <i class="fa-solid fa-rocket"></i> Deploy Squad
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- EDUCATIONAL CERTIFICATE MODAL -->
+<div id="cert-modal" class="modal-bg">
+    <div class="modal-card" style="max-width:540px;">
+        <div class="modal-head">
+            <h3><i class="fa-solid fa-certificate" style="color:var(--gold);"></i> Verification Certificate</h3>
+            <button class="modal-close" onclick="closeCertModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div class="cert-seal">
+            <i class="fa-solid fa-shield-check"></i>
+        </div>
+
+        <div style="text-align:center;margin-bottom:20px;">
+            <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:#fff;letter-spacing:1px;">
+                CERTIFICATE OF COMPLIANCE
+            </div>
+            <div style="font-size:11px;color:var(--gold);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:4px;">
+                Strictly For Educational & Research Purposes
+            </div>
+        </div>
+
+        <div class="cert-badge-box">
+            <strong>OFFICIAL DISCLAIMER & TERMS</strong>
+            This software, interface, and protocol automation system are designed and distributed <b>exclusively for technical education, protocol study, distributed server architecture analysis, and network performance research</b>.
+            <br><br>
+            • System: <b>ISHU X 999</b><br>
+            • Bot Identity: <b>DISHA X ISHU</b> (Random Number Generator)<br>
+            • Support: <b>Only Discord (<a href="https://discord.gg/uFFd8c7B5A" target="_blank" style="color:#8da0ff;">discord.gg/uFFd8c7B5A</a>)</b><br>
+            • Disclaimer: Not endorsed by, affiliated with, or associated with Garena, Free Fire, or Sea Ltd. All game names, marks, and assets belong to their respective trademark holders.
+        </div>
+
+        <div class="cert-meta-row">
+            <span>Certificate ID:</span>
+            <span>ISHU-EDU-2026-X999-VERIFIED</span>
+        </div>
+        <div class="cert-meta-row">
+            <span>Bot Engine:</span>
+            <span>ISHU X 999</span>
+        </div>
+        <div class="cert-meta-row">
+            <span>Bot Name Standard:</span>
+            <span>DISHA X ISHU</span>
+        </div>
+        <div class="cert-meta-row">
+            <span>Status:</span>
+            <span style="color:var(--lime);"><i class="fa-solid fa-check-circle"></i> Active & Protected</span>
+        </div>
+
+        <div class="modal-actions" style="margin-top:24px;">
+            <button type="button" class="btn btn-primary" onclick="closeCertModal()">
+                <i class="fa-solid fa-check"></i> Acknowledge & Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+const VALID_USER = "999X";
+const VALID_PASS = "ISHU";
+const SESSION_STORAGE_KEY = "ISHU_X999_AUTH";
+
+let cachedAccounts = [];
+let cachedLogs = [];
+
+function checkSession() {
+    try {
+        const auth = localStorage.getItem(SESSION_STORAGE_KEY);
+        if (auth === "VALID_ISHU_X999") {
+            unlockApp(true);
+        }
+    } catch(e) {}
+}
+
+function handleLoginSubmit(e) {
+    e.preventDefault();
+    const uInp = document.getElementById("login-username").value.trim();
+    const pInp = document.getElementById("login-password").value.trim();
+    const err = document.getElementById("login-error");
+
+    if (uInp.toUpperCase() === VALID_USER && pInp.toUpperCase() === VALID_PASS) {
+        err.innerText = "";
+        try { localStorage.setItem(SESSION_STORAGE_KEY, "VALID_ISHU_X999"); } catch(ex){}
+        
+        fetch("/api/auth/login", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({username: "999x", password: "ISHU"})
+        }).catch(()=>{});
+
+        unlockApp(false);
+    } else {
+        err.innerText = "✕ Invalid username or password";
+        document.getElementById("login-password").value = "";
+    }
+}
+
+function unlockApp(isRestore) {
+    const sc = document.getElementById("login-screen");
+    const app = document.getElementById("app");
+    if (isRestore) {
+        if (sc) sc.style.display = "none";
+        if (app) app.style.display = "block";
+        fetchStats();
+        setInterval(fetchStats, 3000);
+        return;
+    }
+    sc.style.transition = "opacity .4s ease, transform .4s ease";
+    sc.style.opacity = "0";
+    sc.style.transform = "scale(1.05)";
+    setTimeout(() => {
+        sc.style.display = "none";
+        app.style.display = "block";
+        fetchStats();
+        setInterval(fetchStats, 3000);
+    }, 400);
+}
+
+function logoutSession() {
+    if (!confirm("Are you sure you want to logout?")) return;
+    try { localStorage.removeItem(SESSION_STORAGE_KEY); } catch(e){}
+    location.reload();
+}
+
+function openCreateTeamModal() { document.getElementById("team-modal").classList.add("active"); }
+function closeCreateTeamModal() { document.getElementById("team-modal").classList.remove("active"); }
+function openCertModal() { document.getElementById("cert-modal").classList.add("active"); }
+function closeCertModal() { document.getElementById("cert-modal").classList.remove("active"); }
+
+async function submitCreateTeam(e) {
+    e.preventDefault();
+    const region = document.getElementById("team-region").value;
+    const clan = document.getElementById("team-clan").value.trim();
+    const count = parseInt(document.getElementById("team-count").value, 10);
+    const btn = document.getElementById("btn-create-team");
+
+    if (!clan) { alert("Guild / Clan ID is required"); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Deploying DISHA Bots...';
+
+    try {
+        const r = await fetch("/api/create_team", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({region, clan_id: clan, count, password: "DISHA X ISHU"})
+        });
+        const d = await r.json();
+        if (d.ok) {
+            closeCreateTeamModal();
+            setTimeout(fetchStats, 2000);
+            setTimeout(fetchStats, 6000);
+        } else {
+            alert("Failed: " + (d.error || "Unknown"));
+        }
+    } catch(err) {
+        alert("Network error connecting to cloud server");
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-rocket"></i> Deploy Squad';
+}
+
+async function fetchStats() {
+    try {
+        const r = await fetch("/api/stats", {cache: "no-store"});
+        const d = await r.json();
+        const accs = Array.isArray(d.accounts) ? d.accounts : [];
+        const logs = Array.isArray(d.logs) ? d.logs : [];
+
+        document.getElementById("stat-accounts").innerText = d.total_accounts || accs.length;
+        document.getElementById("stat-completed").innerText = d.total_matches || 0;
+        document.getElementById("stat-exp").innerText = "+" + Number(d.total_gained_exp || 0).toLocaleString();
+
+        const online = accs.filter(a => a.status === "ONLINE" || a.status === "IN_MATCH").length;
+        document.getElementById("stat-online").innerText = online + " Online";
+        document.getElementById("stat-active-matches").innerText = (d.total_active_matches || 0) + " Active";
+
+        cachedAccounts = accs;
+        cachedLogs = logs;
+        renderSlots(accs);
+        renderLogs(logs);
+    } catch(err) {
+        console.error(err);
+    }
+}
+
+function renderSlots(accounts) {
+    const grid = document.getElementById("slots-grid");
+    const squads = {};
+    accounts.forEach(acc => {
+        const gid = acc.clan_id || "Default";
+        if (!squads[gid]) squads[gid] = [];
+        squads[gid].push(acc);
+    });
+
+    const keys = Object.keys(squads);
+    if (keys.length === 0) {
+        grid.innerHTML = `
+            <div style="grid-column:1/-1;text-align:center;padding:50px 20px;color:var(--white-muted);border:1px dashed var(--border);border-radius:var(--r-xl);background:var(--surface);">
+                <i class="fa-solid fa-ghost" style="font-size:36px;color:var(--red-primary);margin-bottom:12px;"></i>
+                <h4 style="font-size:15px;color:#fff;margin-bottom:6px;font-family:'Orbitron',sans-serif;">No Active Squad Deployments</h4>
+                <p style="font-size:12px;">Click "Create Squad" to launch your first DISHA X ISHU bot unit.</p>
+            </div>
+        `;
+        return;
+    }
+
+    grid.innerHTML = "";
+    keys.forEach((gid, index) => {
+        const bots = squads[gid];
+        const card = document.createElement("div");
+        card.className = "slot-card";
+        card.onclick = () => showDetails(gid, bots);
+
+        let memberHtml = "";
+        bots.forEach(b => {
+            const isOnline = b.status === "ONLINE" || b.status === "IN_MATCH";
+            const isMatch = b.status === "IN_MATCH";
+            const cl = isMatch ? 'match' : (isOnline ? 'online' : '');
+            memberHtml += `<div class="member-av ${cl}" title="${esc(b.nickname)}">${b.nickname ? esc(b.nickname.charAt(0)) : 'B'}</div>`;
+        });
+
+        card.innerHTML = `
+            <div class="slot-header">
+                <div class="slot-title">Squad #${index + 1} • DISHA</div>
+                <div class="slot-guild"><i class="fa-solid fa-shield"></i> Clan ${esc(gid)}</div>
+            </div>
+            <div class="slot-members">${memberHtml}</div>
+            <div class="slot-footer">
+                <span>${bots.length} Active Unit(s)</span>
+                <span>Inspect Squad <i class="fa-solid fa-arrow-right"></i></span>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function showDetails(gid, bots) {
+    const panel = document.getElementById("bot-details-panel");
+    const title = document.getElementById("details-title");
+    const container = document.getElementById("details-accounts-container");
+
+    title.innerHTML = `<i class="fa-solid fa-shield"></i> Squad Units — Clan ID: ${esc(gid)}`;
+    container.innerHTML = "";
+
+    bots.forEach(acc => {
+        const card = document.createElement("div");
+        card.className = "account-card";
+
+        const level = Math.max(1, parseInt(acc.level) || 1);
+        const curExp = Number(acc.current_exp || 0);
+        const paused = Boolean(acc.is_paused || acc.status === "PAUSED");
+        const status = paused ? "PAUSED" : (acc.status || "ONLINE");
+
+        let statusClass = "online";
+        let statusText = status;
+        if (paused) { statusClass = "paused"; statusText = "PAUSED"; }
+        else if (status === "IN_MATCH") { statusClass = "match"; statusText = "IN MATCH"; }
+        else if (status === "SEARCHING") { statusClass = "search"; statusText = "SEARCHING"; }
+
+        card.innerHTML = `
+            <div class="acc-head">
+                <div class="acc-id">
+                    <div class="acc-avatar">
+                        <div class="acc-avatar-core"><i class="fa-solid fa-gamepad"></i></div>
+                        <span class="acc-level">L${level}</span>
+                    </div>
+                    <div style="min-width:0">
+                        <div class="acc-name">${esc(acc.nickname || "DISHA-BOT")} <span class="acc-region">${esc(acc.region || "BD")}</span></div>
+                        <div class="acc-uid"><span>UID: ${esc(acc.uid)}</span></div>
+                    </div>
+                </div>
+                <div class="status-pill ${statusClass}"><span class="sdot"></span>${statusText}</div>
+            </div>
+            <div class="acc-metrics">
+                <div class="metric-box"><span>Initial EXP</span><strong>${Number(acc.initial_exp || 0).toLocaleString()}</strong></div>
+                <div class="metric-box"><span>Current EXP</span><strong>${curExp.toLocaleString()}</strong></div>
+                <div class="metric-box gain"><span>EXP Gained</span><strong>+${Number(acc.gained_exp || 0).toLocaleString()}</strong></div>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+
+    panel.classList.add("active");
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function closeDetails() {
+    document.getElementById("bot-details-panel").classList.remove("active");
+}
+
+function renderLogs(logs) {
+    const stream = document.getElementById("console-stream");
+    if (!stream) return;
+    stream.innerHTML = logs.map(l => `
+        <div class="log-line">
+            <span class="log-ts">[${esc(l.time || "00:00:00")}]</span>
+            <span class="log-msg ${l.level || "info"}">${esc(l.message || "")}</span>
+        </div>
+    `).join("");
+    stream.scrollTop = stream.scrollHeight;
+}
+
+async function clearLogs() {
+    try {
+        await fetch("/api/logs/clear", {method: "POST"});
+        cachedLogs = [];
+        renderLogs([]);
+    } catch(e) {}
+}
+
+function esc(s) {
+    if (s === null || s === undefined) return "";
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+}
+
+checkSession();
+</script>
+</body>
+</html>
