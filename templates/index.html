@@ -56,7 +56,6 @@ html, body {
     -webkit-font-smoothing: antialiased;
 }
 
-/* BACKGROUND ATMOSPHERE */
 body::before {
     content: "";
     position: fixed;
@@ -100,7 +99,6 @@ body::after {
     padding: 18px 20px calc(var(--nav-h) + 24px);
 }
 
-/* TOPBAR */
 .topbar {
     display: flex;
     align-items: center;
@@ -245,7 +243,6 @@ body::after {
     flex-wrap: wrap;
 }
 
-/* BUTTONS */
 .btn {
     padding: 11px 18px;
     border-radius: var(--r-md);
@@ -265,6 +262,7 @@ body::after {
     text-decoration: none;
     position: relative;
     overflow: hidden;
+    font-family: inherit;
 }
 
 .btn:hover {
@@ -274,9 +272,8 @@ body::after {
     box-shadow: 0 8px 24px rgba(255, 30, 66, 0.25);
 }
 
-.btn:active {
-    transform: translateY(0);
-}
+.btn:active { transform: translateY(0); }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
 .btn-primary {
     background: var(--red-gradient);
@@ -321,7 +318,6 @@ body::after {
     color: #f87171;
 }
 
-/* STATS ROW */
 .stats {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -394,6 +390,7 @@ body::after {
     display: flex;
     align-items: center;
     gap: 6px;
+    flex-wrap: wrap;
 }
 
 .stat-foot .highlight-green {
@@ -401,7 +398,6 @@ body::after {
     font-weight: 700;
 }
 
-/* SECTION HEAD */
 .section-head {
     display: flex;
     justify-content: space-between;
@@ -428,7 +424,6 @@ body::after {
     font-size: 18px;
 }
 
-/* SLOTS GRID */
 .slots-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -475,6 +470,8 @@ body::after {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .slot-title {
@@ -493,6 +490,7 @@ body::after {
     padding: 4px 10px;
     border-radius: 8px;
     border: 1px solid rgba(255, 30, 66, 0.25);
+    white-space: nowrap;
 }
 
 .slot-members {
@@ -539,6 +537,8 @@ body::after {
     color: var(--white-muted);
     border-top: 1px solid rgba(255, 255, 255, 0.05);
     padding-top: 14px;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .slot-footer span:last-child {
@@ -549,7 +549,6 @@ body::after {
     gap: 5px;
 }
 
-/* BOT DETAILS PANEL */
 .bot-details-panel {
     display: none;
     background: var(--surface);
@@ -578,6 +577,8 @@ body::after {
     margin-bottom: 20px;
     border-bottom: 1px solid var(--border);
     padding-bottom: 16px;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .bot-details-title {
@@ -594,7 +595,6 @@ body::after {
     color: var(--red-primary);
 }
 
-/* ACCOUNT CARDS INSIDE DETAILS */
 .account-card {
     padding: 20px;
     margin-bottom: 14px;
@@ -793,7 +793,6 @@ body::after {
     text-shadow: 0 0 10px rgba(16, 185, 129, 0.35);
 }
 
-/* CONSOLE PANEL */
 .console-panel {
     display: flex;
     flex-direction: column;
@@ -844,6 +843,10 @@ body::after {
     font: 11px/1.8 'JetBrains Mono', monospace;
 }
 
+.console-body::-webkit-scrollbar { width: 6px; }
+.console-body::-webkit-scrollbar-thumb { background: rgba(255,30,66,0.3); border-radius: 10px; }
+.console-body::-webkit-scrollbar-track { background: transparent; }
+
 .log-line {
     display: flex;
     gap: 12px;
@@ -857,16 +860,12 @@ body::after {
     font-weight: 600;
 }
 
-.log-msg {
-    color: rgba(255, 255, 255, 0.75);
-}
-
+.log-msg { color: rgba(255, 255, 255, 0.75); }
 .log-msg.success { color: var(--lime); }
 .log-msg.warning { color: var(--gold); }
 .log-msg.error { color: #f87171; }
 .log-msg.info { color: #38bdf8; }
 
-/* MODALS */
 .modal-bg {
     position: fixed;
     inset: 0;
@@ -880,9 +879,7 @@ body::after {
     overflow-y: auto;
 }
 
-.modal-bg.active {
-    display: flex;
-}
+.modal-bg.active { display: flex; }
 
 .modal-card {
     width: 100%;
@@ -895,6 +892,8 @@ body::after {
     animation: modalRise 0.3s cubic-bezier(0.2, 0.9, 0.2, 1);
     position: relative;
     overflow: hidden;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
 }
 
 .modal-card::before {
@@ -917,6 +916,7 @@ body::after {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 24px;
+    gap: 10px;
 }
 
 .modal-head h3 {
@@ -941,6 +941,9 @@ body::after {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
+    font-family: inherit;
+    font-size: 14px;
 }
 
 .modal-close:hover {
@@ -949,9 +952,7 @@ body::after {
     background: var(--surface-3);
 }
 
-.field-block {
-    margin-bottom: 18px;
-}
+.field-block { margin-bottom: 18px; }
 
 .field-block label {
     display: block;
@@ -994,7 +995,6 @@ body::after {
     justify-content: center;
 }
 
-/* CERTIFICATE MODAL CONTENT */
 .cert-seal {
     width: 72px;
     height: 72px;
@@ -1035,14 +1035,16 @@ body::after {
     color: var(--white-muted);
     padding: 8px 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .cert-meta-row span:last-child {
     color: var(--white);
     font-weight: 700;
+    text-align: right;
 }
 
-/* FOOTER */
 .app-footer {
     margin-top: 36px;
     padding: 24px 20px;
@@ -1080,11 +1082,8 @@ body::after {
     font-size: 11px;
 }
 
-.footer-copy b {
-    color: var(--red-primary);
-}
+.footer-copy b { color: var(--red-primary); }
 
-/* LOGIN SCREEN */
 #login-screen {
     position: fixed;
     inset: 0;
@@ -1180,9 +1179,7 @@ body::after {
     font-family: 'JetBrains Mono', monospace;
 }
 
-.login-brand-sub span {
-    color: var(--red-primary);
-}
+.login-brand-sub span { color: var(--red-primary); }
 
 .login-field-wrap {
     position: relative;
@@ -1219,9 +1216,7 @@ body::after {
     background: rgba(22, 6, 13, 0.95);
 }
 
-.login-input:focus + i {
-    color: var(--red-primary);
-}
+.login-input:focus + i { color: var(--red-primary); }
 
 #login-error {
     min-height: 20px;
@@ -1256,12 +1251,13 @@ body::after {
     .topbar-actions { justify-content: stretch; }
     .topbar-actions .btn { flex: 1; justify-content: center; }
     .app-footer { flex-direction: column; text-align: center; }
+    .acc-metrics { grid-template-columns: 1fr 1fr; }
+    .modal-actions { flex-direction: column-reverse; }
 }
 </style>
 </head>
 <body>
 
-<!-- LOGIN SCREEN -->
 <section id="login-screen">
     <div class="login-card">
         <div class="login-logo-wrap">
@@ -1273,7 +1269,7 @@ body::after {
         <div class="login-brand-title">ISHU X 999</div>
         <div class="login-brand-sub">Guild Glory <span>Automation Engine</span></div>
 
-        <form onsubmit="handleLoginSubmit(event)">
+        <form id="login-form">
             <div class="login-field-wrap">
                 <input id="login-username" class="login-input" type="text" placeholder="Username" autocomplete="username" required>
                 <i class="fa-solid fa-user"></i>
@@ -1283,7 +1279,7 @@ body::after {
                 <i class="fa-solid fa-lock"></i>
             </div>
             <div id="login-error"></div>
-            <button class="btn btn-primary" style="width:100%;padding:16px;justify-content:center;font-size:13px;" type="submit">
+            <button class="btn btn-primary" style="width:100%;padding:16px;justify-content:center;font-size:13px;" type="submit" id="login-submit-btn">
                 <i class="fa-solid fa-shield-halved"></i> Authorize & Enter
             </button>
         </form>
@@ -1300,10 +1296,8 @@ body::after {
     </div>
 </section>
 
-<!-- MAIN APP -->
 <div id="app">
     <div class="shell">
-        <!-- TOPBAR -->
         <header class="topbar">
             <div class="brand-block">
                 <div class="brand-avatar-wrap">
@@ -1338,7 +1332,6 @@ body::after {
             </div>
         </header>
 
-        <!-- STATS CARDS -->
         <section class="stats">
             <div class="stat-card">
                 <div class="stat-header">
@@ -1351,10 +1344,10 @@ body::after {
 
             <div class="stat-card">
                 <div class="stat-header">
-                    <span class="stat-label">Total Matches</span>
+                    <span class="stat-label">Matches Started</span>
                     <i class="fa-solid fa-gamepad stat-icon"></i>
                 </div>
-                <div class="stat-value" id="stat-completed">0</div>
+                <div class="stat-value" id="stat-started">0</div>
                 <div class="stat-foot"><span class="highlight-green" id="stat-active-matches">0 Active</span> in matchmaking</div>
             </div>
 
@@ -1372,12 +1365,11 @@ body::after {
                     <span class="stat-label">Cloud State</span>
                     <i class="fa-solid fa-server stat-icon"></i>
                 </div>
-                <div class="stat-value" style="font-size:22px;color:var(--lime);">OPTIMAL</div>
+                <div class="stat-value" style="font-size:22px;color:var(--lime);" id="stat-status">OPTIMAL</div>
                 <div class="stat-foot">Support: Discord Only</div>
             </div>
         </section>
 
-        <!-- SQUAD SLOTS SECTION -->
         <section>
             <div class="section-head">
                 <div class="section-title">
@@ -1388,7 +1380,6 @@ body::after {
                 </button>
             </div>
 
-            <!-- BOT DETAILS PANEL -->
             <div id="bot-details-panel" class="bot-details-panel">
                 <div class="bot-details-head">
                     <div class="bot-details-title" id="details-title">
@@ -1402,7 +1393,6 @@ body::after {
             <div id="slots-grid" class="slots-grid"></div>
         </section>
 
-        <!-- LIVE CONSOLE LOGS -->
         <section class="console-panel">
             <div class="console-head">
                 <h3><i class="fa-solid fa-terminal"></i> Live Cloud Engine Stream</h3>
@@ -1415,7 +1405,6 @@ body::after {
             <div id="console-stream" class="console-body"></div>
         </section>
 
-        <!-- FOOTER -->
         <footer class="app-footer">
             <div class="footer-brand">
                 <img src="/static/logo.gif" alt="ISHU Logo" onerror="this.onerror=null;this.src='/logo.gif';">
@@ -1435,14 +1424,13 @@ body::after {
     </div>
 </div>
 
-<!-- CREATE TEAM MODAL -->
 <div id="team-modal" class="modal-bg">
     <div class="modal-card">
         <div class="modal-head">
             <h3><i class="fa-solid fa-bolt" style="color:var(--red-primary);"></i> Launch New Squad</h3>
             <button class="modal-close" onclick="closeCreateTeamModal()"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <form onsubmit="submitCreateTeam(event)">
+        <form id="team-form">
             <div class="field-block">
                 <label>Target Region</label>
                 <select id="team-region" class="field-select">
@@ -1456,7 +1444,7 @@ body::after {
             </div>
             <div class="field-block">
                 <label>Clan / Guild ID</label>
-                <input id="team-clan" class="field-input" type="text" placeholder="e.g. 3055092344" required>
+                <input id="team-clan" class="field-input" type="text" placeholder="e.g. 3055092344" required inputmode="numeric" pattern="[0-9]+">
             </div>
             <div class="field-block">
                 <label>Bot Identity & Random ID Generation</label>
@@ -1482,7 +1470,6 @@ body::after {
     </div>
 </div>
 
-<!-- EDUCATIONAL CERTIFICATE MODAL -->
 <div id="cert-modal" class="modal-bg">
     <div class="modal-card" style="max-width:540px;">
         <div class="modal-head">
@@ -1491,7 +1478,7 @@ body::after {
         </div>
 
         <div class="cert-seal">
-            <i class="fa-solid fa-shield-check"></i>
+            <i class="fa-solid fa-shield-halved"></i>
         </div>
 
         <div style="text-align:center;margin-bottom:20px;">
@@ -1539,53 +1526,66 @@ body::after {
 </div>
 
 <script>
+"use strict";
+
+/* ── CONFIG ─────────────────────────────────────────────────── */
 const VALID_USER = "999X";
 const VALID_PASS = "ISHU";
 const SESSION_STORAGE_KEY = "ISHU_X999_AUTH";
+const SESSION_VALID_VALUE = "VALID_ISHU_X999";
+const POLL_INTERVAL_MS = 3000;
 
+/* ── STATE ──────────────────────────────────────────────────── */
 let cachedAccounts = [];
 let cachedLogs = [];
+let pollTimer = null;
+let detailsOpenGid = null;
 
+/* ── UTILS ──────────────────────────────────────────────────── */
+function esc(s) {
+    if (s === null || s === undefined) return "";
+    return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function safeLevel(level) {
+    const allowed = ["info", "success", "warning", "error"];
+    return allowed.includes(level) ? level : "info";
+}
+
+/* ── SESSION ────────────────────────────────────────────────── */
 function checkSession() {
     try {
         const auth = localStorage.getItem(SESSION_STORAGE_KEY);
-        if (auth === "VALID_ISHU_X999") {
+        if (auth === SESSION_VALID_VALUE) {
             unlockApp(true);
         }
-    } catch(e) {}
+    } catch (e) { /* localStorage may be blocked */ }
 }
 
-function handleLoginSubmit(e) {
-    e.preventDefault();
-    const uInp = document.getElementById("login-username").value.trim();
-    const pInp = document.getElementById("login-password").value.trim();
-    const err = document.getElementById("login-error");
+function startPolling() {
+    if (pollTimer) return; // guard against double intervals
+    fetchStats();
+    pollTimer = setInterval(fetchStats, POLL_INTERVAL_MS);
+}
 
-    if (uInp.toUpperCase() === VALID_USER && pInp.toUpperCase() === VALID_PASS) {
-        err.innerText = "";
-        try { localStorage.setItem(SESSION_STORAGE_KEY, "VALID_ISHU_X999"); } catch(ex){}
-        
-        fetch("/api/auth/login", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({username: "999x", password: "ISHU"})
-        }).catch(()=>{});
-
-        unlockApp(false);
-    } else {
-        err.innerText = "✕ Invalid username or password";
-        document.getElementById("login-password").value = "";
-    }
+function stopPolling() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
 }
 
 function unlockApp(isRestore) {
     const sc = document.getElementById("login-screen");
     const app = document.getElementById("app");
+    if (!sc || !app) return;
+
     if (isRestore) {
-        if (sc) sc.style.display = "none";
-        if (app) app.style.display = "block";
-        fetchStats();
-        setInterval(fetchStats, 3000);
+        sc.style.display = "none";
+        app.style.display = "block";
+        startPolling();
         return;
     }
     sc.style.transition = "opacity .4s ease, transform .4s ease";
@@ -1594,22 +1594,65 @@ function unlockApp(isRestore) {
     setTimeout(() => {
         sc.style.display = "none";
         app.style.display = "block";
-        fetchStats();
-        setInterval(fetchStats, 3000);
+        startPolling();
     }, 400);
 }
 
 function logoutSession() {
     if (!confirm("Are you sure you want to logout?")) return;
-    try { localStorage.removeItem(SESSION_STORAGE_KEY); } catch(e){}
+    stopPolling();
+    try { localStorage.removeItem(SESSION_STORAGE_KEY); } catch (e) {}
     location.reload();
 }
 
+/* ── LOGIN ──────────────────────────────────────────────────── */
+async function handleLoginSubmit(e) {
+    e.preventDefault();
+    const uInp = document.getElementById("login-username").value.trim();
+    const pInp = document.getElementById("login-password").value.trim();
+    const err = document.getElementById("login-error");
+    const btn = document.getElementById("login-submit-btn");
+
+    if (uInp.toUpperCase() !== VALID_USER || pInp.toUpperCase() !== VALID_PASS) {
+        err.innerText = "✕ Invalid username or password";
+        document.getElementById("login-password").value = "";
+        return;
+    }
+
+    err.innerText = "";
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Authorizing...';
+
+    // Try backend session (non-blocking — local auth is primary)
+    try {
+        const r = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
+            body: JSON.stringify({ username: "999x", password: "ISHU" })
+        });
+        if (!r.ok) {
+            // Backend user may not exist — that's OK, local auth is primary
+            console.warn("Backend auth returned", r.status);
+        }
+    } catch (e) {
+        console.warn("Backend auth unreachable:", e.message);
+    }
+
+    try { localStorage.setItem(SESSION_STORAGE_KEY, SESSION_VALID_VALUE); } catch (e) {}
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Authorize & Enter';
+    unlockApp(false);
+}
+
+/* ── MODALS ─────────────────────────────────────────────────── */
 function openCreateTeamModal() { document.getElementById("team-modal").classList.add("active"); }
 function closeCreateTeamModal() { document.getElementById("team-modal").classList.remove("active"); }
 function openCertModal() { document.getElementById("cert-modal").classList.add("active"); }
 function closeCertModal() { document.getElementById("cert-modal").classList.remove("active"); }
 
+/* ── CREATE TEAM ─────────────────────────────────────────────── */
 async function submitCreateTeam(e) {
     e.preventDefault();
     const region = document.getElementById("team-region").value;
@@ -1618,6 +1661,11 @@ async function submitCreateTeam(e) {
     const btn = document.getElementById("btn-create-team");
 
     if (!clan) { alert("Guild / Clan ID is required"); return; }
+    if (!/^\d+$/.test(clan)) { alert("Guild / Clan ID must be numeric"); return; }
+    if (!Number.isFinite(count) || count < 1 || count > 2) {
+        alert("Invalid bot count");
+        return;
+    }
 
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Deploying DISHA Bots...';
@@ -1625,18 +1673,19 @@ async function submitCreateTeam(e) {
     try {
         const r = await fetch("/api/create_team", {
             method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({region, clan_id: clan, count, password: "DISHA X ISHU"})
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ region, clan_id: clan, count, password: "DISHA X ISHU" })
         });
         const d = await r.json();
         if (d.ok) {
             closeCreateTeamModal();
             setTimeout(fetchStats, 2000);
             setTimeout(fetchStats, 6000);
+            setTimeout(fetchStats, 12000);
         } else {
-            alert("Failed: " + (d.error || "Unknown"));
+            alert("Failed: " + (d.error || "Unknown error"));
         }
-    } catch(err) {
+    } catch (err) {
         alert("Network error connecting to cloud server");
     }
 
@@ -1644,35 +1693,63 @@ async function submitCreateTeam(e) {
     btn.innerHTML = '<i class="fa-solid fa-rocket"></i> Deploy Squad';
 }
 
+/* ── STATS ───────────────────────────────────────────────────── */
 async function fetchStats() {
     try {
-        const r = await fetch("/api/stats", {cache: "no-store"});
+        const r = await fetch("/api/stats", { cache: "no-store", credentials: "same-origin" });
+        if (!r.ok) {
+            setStatStatus("DEGRADED", false);
+            return;
+        }
         const d = await r.json();
+
         const accs = Array.isArray(d.accounts) ? d.accounts : [];
         const logs = Array.isArray(d.logs) ? d.logs : [];
 
-        document.getElementById("stat-accounts").innerText = d.total_accounts || accs.length;
-        document.getElementById("stat-completed").innerText = d.total_matches || 0;
+        document.getElementById("stat-accounts").innerText = d.total_accounts ?? accs.length;
+        document.getElementById("stat-started").innerText = d.total_matches_started || 0;
         document.getElementById("stat-exp").innerText = "+" + Number(d.total_gained_exp || 0).toLocaleString();
 
         const online = accs.filter(a => a.status === "ONLINE" || a.status === "IN_MATCH").length;
         document.getElementById("stat-online").innerText = online + " Online";
         document.getElementById("stat-active-matches").innerText = (d.total_active_matches || 0) + " Active";
 
+        setStatStatus("OPTIMAL", true);
+
         cachedAccounts = accs;
         cachedLogs = logs;
+
+        // If details panel is open, refresh it too
+        if (detailsOpenGid) {
+            const fresh = accs.filter(a => (a.clan_id || "Default") === detailsOpenGid);
+            if (fresh.length > 0) showDetails(detailsOpenGid);
+            else closeDetails();
+        }
+
         renderSlots(accs);
         renderLogs(logs);
-    } catch(err) {
-        console.error(err);
+    } catch (err) {
+        console.error("fetchStats:", err);
+        setStatStatus("UNREACHABLE", false);
     }
 }
 
+function setStatStatus(text, ok) {
+    const el = document.getElementById("stat-status");
+    if (!el) return;
+    el.innerText = text;
+    el.style.color = ok ? "var(--lime)" : "#f87171";
+}
+
+/* ── SLOTS ───────────────────────────────────────────────────── */
 function renderSlots(accounts) {
     const grid = document.getElementById("slots-grid");
+    if (!grid) return;
+
+    // Group by clan_id (fallback to auth_uid bucket or Default)
     const squads = {};
     accounts.forEach(acc => {
-        const gid = acc.clan_id || "Default";
+        const gid = acc.clan_id || acc.auth_uid || "Default";
         if (!squads[gid]) squads[gid] = [];
         squads[gid].push(acc);
     });
@@ -1694,14 +1771,16 @@ function renderSlots(accounts) {
         const bots = squads[gid];
         const card = document.createElement("div");
         card.className = "slot-card";
-        card.onclick = () => showDetails(gid, bots);
+        // FIX: pass gid only (not stale bots array)
+        card.onclick = () => showDetails(gid);
 
         let memberHtml = "";
         bots.forEach(b => {
             const isOnline = b.status === "ONLINE" || b.status === "IN_MATCH";
             const isMatch = b.status === "IN_MATCH";
-            const cl = isMatch ? 'match' : (isOnline ? 'online' : '');
-            memberHtml += `<div class="member-av ${cl}" title="${esc(b.nickname)}">${b.nickname ? esc(b.nickname.charAt(0)) : 'B'}</div>`;
+            const cl = isMatch ? "match" : (isOnline ? "online" : "");
+            const initial = b.nickname ? b.nickname.charAt(0) : "B";
+            memberHtml += `<div class="member-av ${cl}" title="${esc(b.nickname)}">${esc(initial)}</div>`;
         });
 
         card.innerHTML = `
@@ -1719,11 +1798,19 @@ function renderSlots(accounts) {
     });
 }
 
-function showDetails(gid, bots) {
+/* ── DETAILS PANEL ───────────────────────────────────────────── */
+function showDetails(gid) {
     const panel = document.getElementById("bot-details-panel");
     const title = document.getElementById("details-title");
     const container = document.getElementById("details-accounts-container");
+    if (!panel || !title || !container) return;
 
+    // FIX: always use fresh data from cache
+    const bots = cachedAccounts.filter(a => (a.clan_id || a.auth_uid || "Default") === gid);
+
+    if (bots.length === 0) { closeDetails(); return; }
+
+    detailsOpenGid = gid;
     title.innerHTML = `<i class="fa-solid fa-shield"></i> Squad Units — Clan ID: ${esc(gid)}`;
     container.innerHTML = "";
 
@@ -1754,7 +1841,7 @@ function showDetails(gid, bots) {
                         <div class="acc-uid"><span>UID: ${esc(acc.uid)}</span></div>
                     </div>
                 </div>
-                <div class="status-pill ${statusClass}"><span class="sdot"></span>${statusText}</div>
+                <div class="status-pill ${statusClass}"><span class="sdot"></span>${esc(statusText)}</div>
             </div>
             <div class="acc-metrics">
                 <div class="metric-box"><span>Initial EXP</span><strong>${Number(acc.initial_exp || 0).toLocaleString()}</strong></div>
@@ -1766,20 +1853,26 @@ function showDetails(gid, bots) {
     });
 
     panel.classList.add("active");
-    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    panel.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function closeDetails() {
+    detailsOpenGid = null;
     document.getElementById("bot-details-panel").classList.remove("active");
 }
 
+/* ── LOGS ────────────────────────────────────────────────────── */
 function renderLogs(logs) {
     const stream = document.getElementById("console-stream");
     if (!stream) return;
+    if (!logs || logs.length === 0) {
+        stream.innerHTML = '<div style="color:var(--white-muted);text-align:center;padding:20px;">No logs yet — waiting for engine output...</div>';
+        return;
+    }
     stream.innerHTML = logs.map(l => `
         <div class="log-line">
             <span class="log-ts">[${esc(l.time || "00:00:00")}]</span>
-            <span class="log-msg ${l.level || "info"}">${esc(l.message || "")}</span>
+            <span class="log-msg ${safeLevel(l.level)}">${esc(l.message || "")}</span>
         </div>
     `).join("");
     stream.scrollTop = stream.scrollHeight;
@@ -1787,17 +1880,29 @@ function renderLogs(logs) {
 
 async function clearLogs() {
     try {
-        await fetch("/api/logs/clear", {method: "POST"});
+        await fetch("/api/logs/clear", { method: "POST", credentials: "same-origin" });
         cachedLogs = [];
         renderLogs([]);
-    } catch(e) {}
+    } catch (e) { console.error(e); }
 }
 
-function esc(s) {
-    if (s === null || s === undefined) return "";
-    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
-}
+/* ── EVENT WIRING ────────────────────────────────────────────── */
+document.getElementById("login-form").addEventListener("submit", handleLoginSubmit);
+document.getElementById("team-form").addEventListener("submit", submitCreateTeam);
 
+// Close modals on backdrop click / Escape
+document.querySelectorAll(".modal-bg").forEach(m => {
+    m.addEventListener("click", e => {
+        if (e.target === m) m.classList.remove("active");
+    });
+});
+document.addEventListener("keydown", e => {
+    if (e.key === "Escape") {
+        document.querySelectorAll(".modal-bg.active").forEach(m => m.classList.remove("active"));
+    }
+});
+
+/* ── BOOT ────────────────────────────────────────────────────── */
 checkSession();
 </script>
 </body>
