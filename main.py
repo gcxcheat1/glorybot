@@ -1326,6 +1326,19 @@ def _create_clan_payload(clan_id):
     except Exception as e:
         print_error(f"[CLAN] payload: {e}"); return None
 
+def _sanitize_log_text(text: str, max_len: int = 200) -> str:
+    """Strip anything that looks like a token/JWT from log output."""
+    if not text:
+        return ""
+    try:
+        s = str(text)
+        # Redact long base64/JWT-like strings
+        s = re.sub(r'eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+', '<JWT>', s)
+        s = re.sub(r'[A-Za-z0-9_\-]{40,}', '<TOKEN>', s)
+        return s[:max_len]
+    except Exception:
+        return "<unprintable>"
+
 async def join_clan(jwt_token, clan_id):
     try:
         region = _get_region_from_jwt(jwt_token)
@@ -1342,15 +1355,13 @@ async def join_clan(jwt_token, clan_id):
         ssl_ctx.check_hostname = False; ssl_ctx.verify_mode = ssl.CERT_NONE
         async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=15)) as s:
             async with s.post(url, headers=hdrs, data=payload, ssl=ssl_ctx) as r:
-                # Read the response body so HTTP errors can be diagnosed instead
-                # of logging only the status code. Do not log auth tokens/headers.
                 response_text = await r.text(errors="replace")
                 if r.status == 200:
                     print_success(f"[CLAN] Request accepted for clan {clan_id}")
                     return True
                 print_warning(f"[CLAN] HTTP status: {r.status}")
                 if response_text:
-                    print_warning(f"[CLAN] Response: {response_text[:500]}")
+                    print_warning(f"[CLAN] Response: {_sanitize_log_text(response_text, 300)}")
                 return False
     except Exception as e:
         print_error(f"[CLAN] {e}"); return False
@@ -1962,6 +1973,12 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
     _team_active = {"flag": True}
     _match_played = {"flag": False}
 
+    async def _on_match_complete():
+        try:
+            await _mark_bot_match_finished(uid_str)
+        except Exception:
+            pass
+
     async def _process_social_packet(raw_bytes, tag="MAIN"):
         try:
             hex_data = raw_bytes.hex()
@@ -2490,7 +2507,8 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
                                     play_game(server_ip_port, thunder, sharma, udp_key,
                                               match_code, effective_acc_id, "BD",
                                               client_version, current_key, current_iv,
-                                              match_index=match_index))
+                                              match_index=match_index,
+                                              on_match_complete=_on_match_complete))
                                 play_matches.append(new_match)
                                 try:
                                     writer.close()
@@ -2728,7 +2746,12 @@ async def run_account_worker(ad, label, region_override=None, clan_override=None
         if ENABLE_HTTP_PING:
             try:
                 _phost = str(ad.get("server_url") or PING_URL).rstrip("/")
-                _purl = _phost if _phost.endswith("/Ping") else (_phost + "/Ping")
+                # Fix: only append /Ping if base URL doesn't already contain a path
+                # and isn't the canonical ping host itself.
+                if _phost.rstrip("/") == PING_URL.rstrip("/").rsplit("/", 1)[0]:
+                    _purl = PING_URL
+                else:
+                    _purl = _phost if _phost.endswith("/Ping") else (_phost + "/Ping")
                 ping_task = asyncio.create_task(ping_worker(
                     acc_id, ad["token"], ad["release_version"],
                     region=reg, ping_url=_purl))
@@ -2775,10 +2798,16 @@ async def account_loop_guest(uid, password, region_override=None, clan_override=
 
 # ==================== CREATE ACCOUNTS ====================
 def _gf_field(ld, key, default=None):
-    if not ld: return default
-    v = ld.get(str(key), {})
-    if isinstance(v, dict): return v.get("data", default)
-    return v if v is not None else default
+    """Safely pull a field from decoded GetLoginData response."""
+    if not ld or not isinstance(ld, dict):
+        return default
+    try:
+        v = ld.get(str(key), {})
+        if isinstance(v, dict):
+            return v.get("data", default)
+        return v if v is not None else default
+    except Exception:
+        return default
 
 async def choose_region(region, jwt_token, login_url, release_version):
     region_code = region.upper()
@@ -3679,7 +3708,8 @@ async def api_client_launch(request):
             if ad.get("token"):
                 asyncio.create_task(join_clan(ad["token"], clan_id))
     elif not bot_state.creating:
-        asyncio.create_task(create_four_accounts(reg_code, clan_id, 2, "SINGH"))
+        # Fixed: use TEAM_SIZE rather than hardcoded 2
+        asyncio.create_task(create_four_accounts(reg_code, clan_id, TEAM_SIZE, "SINGH"))
 
     return aiohttp.web.json_response({"ok": True, "success": True, "group": group})
 
@@ -4014,7 +4044,8 @@ async def api_create_team(request):
         body = await request.json()
         region = str(body.get("region", "BD")).upper()
         clan_id = str(body.get("clan_id", "")).strip()
-        count = max(1, min(2, int(body.get("count", 2))))
+        # Fixed: clamp count to TEAM_SIZE (was hardcoded 2)
+        count = max(1, min(TEAM_SIZE, int(body.get("count", TEAM_SIZE))))
         password = str(body.get("password", "SINGH")).strip() or "SINGH"
         if not clan_id:
             return aiohttp.web.json_response({"ok": False, "error": "clan_id required"})
@@ -4090,11 +4121,11 @@ async def api_account_restart(request):
         if os.path.exists(ACCOUNTS_FILE):
             with open(ACCOUNTS_FILE,"r",encoding="utf-8") as f:
                 accs = json.load(f)
+            # Fixed: restart all matching accounts (was break after first)
             for a in accs:
                 if str(a.get("uid")) in resolved and a.get("password"):
                     t = asyncio.create_task(account_loop_guest(str(a["uid"]), a["password"]))
                     bot_state.account_workers[str(a["uid"])] = t
-                    break
         return aiohttp.web.json_response({"status": "ok"})
     except Exception as e:
         return aiohttp.web.json_response({"status": "error", "error": str(e)})
