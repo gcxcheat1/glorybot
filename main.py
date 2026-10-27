@@ -5,7 +5,7 @@
 #   • Team code robust extraction + peer wait timeout + member retry
 #   • Region obfuscation for start_match_team / ready_for_game / invite
 #   • ONLY NEW BOTS: auto-load from accounts.json is DISABLED
-#   • Fresh squad guard: prevents multiple squads running simultaneously
+#   • Fresh squad guard with FORCE OVERRIDE support
 # ============================================================
 import sys, os, json, time, uuid, random, asyncio, base64, struct, socket
 import itertools, traceback, ssl, hmac, hashlib, string, re, subprocess
@@ -53,16 +53,13 @@ INDEX_HTML_PATH = "templates/index.html"
 
 START_MATCH_INTERVAL = 5.0
 
-# ── Parallel-match engine ───────────────────────────────────
 MATCH_SEARCH_TIMEOUT   = 45.0
 MATCH_WATCHDOG_CHECK   = 15.0
 MAX_SEARCH_ATTEMPTS    = 45
 
-# ── Anti-AFK fire packet (cmd 104 / 105) ────────────────────
 ANTI_AFK_MIN_INTERVAL  = 1.8
 ANTI_AFK_MAX_INTERVAL  = 3.5
 
-# ── Movement engine (state machine + msg_key 0x6B) ─────────
 ENABLE_SPEED_MOVEMENT       = True
 MOVEMENT_SPEED_MIN          = 1.0
 MOVEMENT_SPEED_MAX          = 1.4
@@ -78,7 +75,6 @@ MOVEMENT_STATE_JUMP_CHANCE   = 0.08
 MOVEMENT_STATE_CROUCH_CHANCE = 0.06
 MOVEMENT_STATE_PRONE_CHANCE  = 0.06
 
-# ── HTTP keep-alive ping ────────────────────────────────────
 ENABLE_HTTP_PING = True
 PING_INTERVAL    = 20.0
 PING_TIMEOUT     = 8.0
@@ -101,7 +97,6 @@ TEAM_PEER_WAIT_TIMEOUT = 30.0
 TEAM_CODE_WAIT_TIMEOUT = 25.0
 CLAN_ID_DEFAULT = "3033431593"
 
-# Region tag mapping for obfuscated team packets
 REGION_TAG_MAP = {
     "BD": "IDC3", "IND": "IDC2", "PK": "IDC3", "ID": "IDC3",
     "ME": "IDC4", "BR": "IDC5", "NA": "IDC5", "SG": "IDC3",
@@ -1914,7 +1909,7 @@ async def play_game(server_ip_port, thunder, sharma, udp_key, match_code,
         except Exception: pass
 
 
-# ==================== FUNCTIONAL DUO TEAM LOOP (FULLY FIXED) ====================
+# ==================== FUNCTIONAL DUO TEAM LOOP ====================
 async def functional_lone_wolf(addrs, starter_packet, account_region, client_version,
                                 key, iv, account_id="", account_data=None, max_reconnects=10):
     reconnects = 0
@@ -2044,9 +2039,6 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
         except Exception:
             pass
 
-    # ─────────────────────────────────────────────────────────
-    #  LEADER COORDINATOR (FIXED — never blocks forever)
-    # ─────────────────────────────────────────────────────────
     async def _team_coordinator():
         try:
             loop = asyncio.get_running_loop()
@@ -2170,9 +2162,6 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
         except Exception as e:
             print_error(f"[TEAM] coordinator error: {e}")
 
-    # ─────────────────────────────────────────────────────────
-    #  MEMBER MATCH TRIGGER (FIXED — waits for team_code)
-    # ─────────────────────────────────────────────────────────
     async def _member_match_trigger():
         try:
             await asyncio.sleep(TEAM_READY_DELAY + 4.0)
@@ -2239,9 +2228,6 @@ async def functional_lone_wolf(addrs, starter_packet, account_region, client_ver
         except Exception as e:
             print_warning(f"[TEAM] member trigger outer: {e}")
 
-    # ─────────────────────────────────────────────────────────
-    #  MAIN TCP LOOP
-    # ─────────────────────────────────────────────────────────
     try:
         while True:
             while bot_state.is_paused(uid_str):
@@ -3074,7 +3060,6 @@ def _find_file(filename: str) -> Optional[str]:
     return None
 
 _SHARED_JS_EXTRAS = """
-// ═══════════════ Auto-injected Client Helpers ═══════════════
 async function loadPricing() {
     try {
         const res = await fetch(API.pricing);
@@ -3085,63 +3070,8 @@ async function loadPricing() {
             creditPrices.premium = data.premium_credit_usd || 20.00;
         }
         (data.regions || []).forEach(r => { regionPricing[r.id] = r; });
-        const bEl = document.getElementById('checkout-binance-id');
-        if (bEl && data.binance_pay_id) bEl.textContent = data.binance_pay_id;
-        if (typeof populateRegionSelect === 'function') populateRegionSelect(data.regions || []);
     } catch (e) { console.error('loadPricing err:', e); }
 }
-
-function updateRegionPrice() {
-    const sel = document.getElementById('region-select');
-    if (!sel || !sel.value) return;
-    const cfg = regionPricing[sel.value] || { tier: 'basic', region_name: sel.value.toUpperCase() };
-    const isPrem = cfg.tier === 'premium';
-    const costEl = document.getElementById('region-credit-cost');
-    const usdEl = document.getElementById('region-usd-price');
-    const btnTxt = document.getElementById('launch-btn-text');
-    const price = isPrem ? (creditPrices.premium || 20.00) : (creditPrices.basic || 1.70);
-    if (costEl) {
-        costEl.textContent = isPrem ? '1 ⭐ Premium credit' : '1 🔵 Basic credit';
-        costEl.className = isPrem ? 'font-bold text-amber-400' : 'font-bold text-blue-400';
-    }
-    if (usdEl) usdEl.textContent = '$' + price.toFixed(2);
-    if (btnTxt) btnTxt.textContent = `Start Group (1 ${isPrem ? 'Premium' : 'Basic'} Credit)`;
-}
-
-function renderGroups(groups, containerId) {
-    const container = document.getElementById(containerId);
-    const emptyEl = document.getElementById('my-groups-empty');
-    const countEl = document.getElementById('my-groups-count');
-    if (countEl) countEl.textContent = (groups || []).length;
-    if (!container) return;
-    if (!groups || groups.length === 0) {
-        container.innerHTML = '';
-        if (emptyEl) emptyEl.classList.remove('hidden');
-        return;
-    }
-    if (emptyEl) emptyEl.classList.add('hidden');
-    container.innerHTML = groups.map(g => `
-        <div class="ng-card p-4 mb-3 border border-white/10">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                    <div class="flex items-center gap-2">
-                        <span class="font-mono text-sm font-bold text-white">Group #${escapeHtml(g.id)}</span>
-                        <span class="ng-badge-success text-[10px]">${escapeHtml(g.status || 'RUNNING')}</span>
-                        <span class="ng-badge-primary text-[10px]">${escapeHtml((g.region || 'BD').toUpperCase())}</span>
-                    </div>
-                    <p class="text-xs text-gray-400 mt-1">Clan ID: <code class="text-[#F5E6D3]">${escapeHtml(g.clan_id)}</code> • Gained EXP: <span class="text-emerald-400 font-bold">+${formatNumber(g.gained_exp || 0)}</span></p>
-                </div>
-                <div class="flex items-center gap-2 flex-wrap">
-                    <button onclick="showGloryProgression('${escapeHtml(g.id)}')" class="ng-btn-outline text-xs px-3 py-1.5 text-amber-400">Glory</button>
-                    <button onclick="groupAction('${escapeHtml(g.id)}','stop')" class="ng-btn-outline text-xs px-3 py-1.5">Stop</button>
-                    <button onclick="openRefundModal('${escapeHtml(g.id)}')" class="ng-btn-outline text-xs px-3 py-1.5 text-blue-400">Refund</button>
-                    <button onclick="groupAction('${escapeHtml(g.id)}','delete')" class="ng-btn-outline text-xs px-3 py-1.5 text-red-400">Delete</button>
-                </div>
-            </div>
-        </div>
-    `).join('');
-}
-
 async function groupAction(groupId, action) {
     try {
         const res = await fetch(API.clientAction, {
@@ -3152,26 +3082,14 @@ async function groupAction(groupId, action) {
         const d = await res.json();
         if (res.ok && d.success) {
             showToast(d.message || 'Done', 'success');
-            if (typeof loadMyGroups === 'function') loadMyGroups();
-            if (typeof loadGroupHistory === 'function') loadGroupHistory();
         } else {
             showToast(d.error || d.message || 'Action failed', 'error');
         }
     } catch (e) { showToast('Network error', 'error'); }
 }
-
-function closeGloryModal() {
-    const m = document.getElementById('glory-modal');
-    if (m) m.classList.add('hidden');
-}
-function closeMessageModal() {
-    const m = document.getElementById('message-modal');
-    if (m) m.classList.add('hidden');
-}
-function closeRenameModal() {
-    const m = document.getElementById('rename-modal');
-    if (m) m.classList.add('hidden');
-}
+function closeGloryModal() { const m = document.getElementById('glory-modal'); if (m) m.classList.add('hidden'); }
+function closeMessageModal() { const m = document.getElementById('message-modal'); if (m) m.classList.add('hidden'); }
+function closeRenameModal() { const m = document.getElementById('rename-modal'); if (m) m.classList.add('hidden'); }
 """
 
 async def serve_html_file(filename: str):
@@ -3181,9 +3099,7 @@ async def serve_html_file(filename: str):
             return aiohttp.web.Response(text=f.read(), content_type="text/html", charset="utf-8")
     return aiohttp.web.Response(text=f"<h1>{filename} not found</h1>", content_type="text/html", status=404)
 
-async def handle_root(request):
-    return await serve_html_file("index.html")
-
+async def handle_root(request):     return await serve_html_file("index.html")
 async def handle_ffglory(request):  return await serve_html_file("ffglory.html")
 async def handle_index(request):    return await serve_html_file("index.html")
 async def handle_admin(request):    return await serve_html_file("admin.html")
@@ -3244,19 +3160,19 @@ def _get_current_user(request) -> Optional[dict]:
         return None
     return panel_db.users.get(username)
 
-def _require_user(request) -> Tuple[Optional[dict], Optional[aiohttp.web.Response]]:
+def _require_user(request):
     u = _get_current_user(request)
     if not u:
         return None, aiohttp.web.json_response({"error": "Unauthorized"}, status=401)
     return u, None
 
-def _require_admin(request) -> Tuple[Optional[dict], Optional[aiohttp.web.Response]]:
+def _require_admin(request):
     u = _get_current_user(request)
     if not u or u.get("role") != "admin":
         return None, aiohttp.web.json_response({"error": "Admin access required"}, status=403)
     return u, None
 
-# ==================== AUTH & USER API ====================
+# ==================== AUTH API ====================
 async def api_auth_login(request):
     body = await request.json()
     username = str(body.get("username", "")).strip().lower()
@@ -3287,14 +3203,10 @@ async def api_auth_signup(request):
     if username in panel_db.users:
         return aiohttp.web.json_response({"error": "Username already exists"}, status=400)
     panel_db.users[username] = {
-        "username": username,
-        "display_name": username,
-        "password_hash": _hash_pw(password),
-        "role": "user",
-        "basic_credits": 0,
-        "premium_credits": 0,
-        "max_groups": 10,
-        "created_at": int(time.time()),
+        "username": username, "display_name": username,
+        "password_hash": _hash_pw(password), "role": "user",
+        "basic_credits": 0, "premium_credits": 0,
+        "max_groups": 10, "created_at": int(time.time()),
     }
     panel_db.save()
     return aiohttp.web.json_response({"ok": True, "success": True})
@@ -3315,9 +3227,9 @@ async def api_auth_change_password(request):
     cur = str(body.get("current_password", ""))
     nw = str(body.get("new_password", ""))
     if u.get("password_hash") != _hash_pw(cur):
-        return aiohttp.web.json_response({"error": "Current password is incorrect", "message": "Current password is incorrect"}, status=400)
+        return aiohttp.web.json_response({"error": "Current password is incorrect"}, status=400)
     if len(nw) < 6:
-        return aiohttp.web.json_response({"error": "Minimum 6 characters required", "message": "Minimum 6 characters required"}, status=400)
+        return aiohttp.web.json_response({"error": "Minimum 6 characters required"}, status=400)
     u["password_hash"] = _hash_pw(nw)
     panel_db.save()
     return aiohttp.web.json_response({"ok": True, "success": True})
@@ -3341,7 +3253,7 @@ async def api_admin_overview(request):
     users = list(panel_db.users.values())
     coupons = list(panel_db.coupons.values())
     bots = list(bot_state.accounts.values())
-    online_bots = sum(1 for b in bots if b.get("status") in ("ONLINE", "IN_MATCH", "IN_MATCH (TEAM)", "SEARCHING"))
+    online_bots = sum(1 for b in bots if b.get("status") in ("ONLINE", "IN_MATCH", "SEARCHING"))
     return aiohttp.web.json_response({
         "total_users": len(users),
         "total_admins": sum(1 for u in users if u.get("role") == "admin"),
@@ -3349,8 +3261,7 @@ async def api_admin_overview(request):
         "total_premium_credits": sum(u.get("premium_credits", 0) for u in users),
         "active_coupons": sum(1 for c in coupons if c.get("status") == "active"),
         "used_coupons": sum(1 for c in coupons if c.get("status") == "used"),
-        "bot_accounts": len(bots),
-        "bot_online": online_bots,
+        "bot_accounts": len(bots), "bot_online": online_bots,
         "pending_clans": sum(1 for g in panel_db.groups.values() if g.get("status") == "RUNNING"),
         "uptime": int(time.time() - bot_state.start_time),
     })
@@ -3390,14 +3301,11 @@ async def api_admin_user_create(request):
     if username in panel_db.users:
         return aiohttp.web.json_response({"error": "Username already exists"}, status=400)
     panel_db.users[username] = {
-        "username": username,
-        "display_name": username,
+        "username": username, "display_name": username,
         "password_hash": _hash_pw(password),
-        "role": role if role in ("user", "admin") else "user",
-        "basic_credits": basic,
-        "premium_credits": premium,
-        "max_groups": 10,
-        "created_at": int(time.time()),
+        "role": role if role in ("user","admin") else "user",
+        "basic_credits": basic, "premium_credits": premium,
+        "max_groups": 10, "created_at": int(time.time()),
     }
     panel_db.save()
     return aiohttp.web.json_response({"ok": True, "display_name": username})
@@ -3420,11 +3328,7 @@ async def api_admin_user_credits(request):
         u["basic_credits"] = max(0, u.get("basic_credits", 0) + basic)
         u["premium_credits"] = max(0, u.get("premium_credits", 0) + premium)
     panel_db.save()
-    return aiohttp.web.json_response({
-        "ok": True,
-        "basic_credits": u["basic_credits"],
-        "premium_credits": u["premium_credits"],
-    })
+    return aiohttp.web.json_response({"ok": True, "basic_credits": u["basic_credits"], "premium_credits": u["premium_credits"]})
 
 async def api_admin_user_role(request):
     _, err = _require_admin(request)
@@ -3451,7 +3355,7 @@ async def api_admin_user_delete(request):
         panel_db.save()
     return aiohttp.web.json_response({"ok": True})
 
-def _gen_coupon_code() -> str:
+def _gen_coupon_code():
     chars = string.ascii_uppercase + string.digits
     return "-".join("".join(random.choices(chars, k=4)) for _ in range(3))
 
@@ -3475,17 +3379,11 @@ async def api_admin_coupon_create(request):
             return aiohttp.web.json_response({"error": "Insufficient user credits"}, status=400)
         u["basic_credits"] -= basic
         u["premium_credits"] -= premium
-
     code = _gen_coupon_code()
     coupon = {
-        "code": code,
-        "basic_credits": basic,
-        "premium_credits": premium,
-        "created_by": for_user,
-        "status": "active",
-        "used_by": None,
-        "created_at": int(time.time()),
-        "used_at": None,
+        "code": code, "basic_credits": basic, "premium_credits": premium,
+        "created_by": for_user, "status": "active", "used_by": None,
+        "created_at": int(time.time()), "used_at": None,
     }
     panel_db.coupons[code] = coupon
     panel_db.save()
@@ -3519,30 +3417,24 @@ async def api_admin_join_clan(request):
     clan_id = str(body.get("clan_id", "")).strip()
     if not clan_id:
         return aiohttp.web.json_response({"error": "clan_id required"}, status=400)
-    results = []
-    seen = set()
+    results = []; seen = set()
     for uid, ad in list(bot_state.account_credentials.items()):
         acc_id = str(ad.get("account_id", uid))
-        if acc_id in seen:
-            continue
+        if acc_id in seen: continue
         seen.add(acc_id)
         tok = ad.get("token")
         ok = False
-        if tok:
-            ok = await join_clan(tok, clan_id)
+        if tok: ok = await join_clan(tok, clan_id)
         results.append({
             "account_id": acc_id,
             "nickname": ad.get("nickname", f"Bot_{acc_id}"),
-            "success": ok,
-            "status_code": 200 if ok else 400,
+            "success": ok, "status_code": 200 if ok else 400,
             "error": None if ok else "Failed or token expired",
         })
     s_cnt = sum(1 for r in results if r["success"])
     return aiohttp.web.json_response({
-        "total": len(results),
-        "success": s_cnt,
-        "failed": len(results) - s_cnt,
-        "results": results,
+        "total": len(results), "success": s_cnt,
+        "failed": len(results) - s_cnt, "results": results,
     })
 
 # ==================== CLIENT API ====================
@@ -3561,9 +3453,7 @@ async def api_public_contact_info(request):
     })
 
 async def api_vapid_public_key(request):
-    return aiohttp.web.json_response({
-        "publicKey": panel_db.settings.get("vapid_public_key", "")
-    })
+    return aiohttp.web.json_response({"publicKey": panel_db.settings.get("vapid_public_key", "")})
 
 async def api_push_subscribe(request):
     u = _get_current_user(request)
@@ -3571,8 +3461,7 @@ async def api_push_subscribe(request):
         try:
             sub = await request.json()
             panel_db.push_subscriptions.setdefault(u["username"], []).append(sub)
-        except Exception:
-            pass
+        except Exception: pass
     return aiohttp.web.json_response({"ok": True})
 
 async def api_client_groups(request):
@@ -3582,8 +3471,7 @@ async def api_client_groups(request):
     out = []
     for gid, g in panel_db.groups.items():
         if u.get("role") == "admin" or g.get("owner") == u["username"]:
-            g_copy = dict(g)
-            g_copy["gained_exp"] = total_gained
+            g_copy = dict(g); g_copy["gained_exp"] = total_gained
             out.append(g_copy)
     return aiohttp.web.json_response(out)
 
@@ -3600,41 +3488,31 @@ async def api_client_launch(request):
     clan_id = str(body.get("clan_id", "")).strip()
     if not clan_id:
         return aiohttp.web.json_response({"error": "Clan ID is required"}, status=400)
-
     reg_cfg = next((r for r in panel_db.settings["regions"] if r["id"] == region), {"tier": "basic", "code": region.upper()})
     tier = reg_cfg.get("tier", "basic")
     reg_code = reg_cfg.get("code", region.upper())
-
     if tier == "premium":
         if u.get("premium_credits", 0) < 1:
-            return aiohttp.web.json_response({"error": "Insufficient Premium credits", "required": 1, "available": u.get("premium_credits", 0)}, status=400)
+            return aiohttp.web.json_response({"error": "Insufficient Premium credits"}, status=400)
         u["premium_credits"] -= 1
     else:
         if u.get("basic_credits", 0) < 1:
-            return aiohttp.web.json_response({"error": "Insufficient Basic credits", "required": 1, "available": u.get("basic_credits", 0)}, status=400)
+            return aiohttp.web.json_response({"error": "Insufficient Basic credits"}, status=400)
         u["basic_credits"] -= 1
-
     gid = uuid.uuid4().hex[:8].upper()
     group = {
-        "id": gid,
-        "owner": u["username"],
-        "region": reg_code,
-        "clan_id": clan_id,
-        "tier": tier,
-        "status": "RUNNING",
-        "created_at": int(time.time()),
-        "gained_exp": 0,
+        "id": gid, "owner": u["username"], "region": reg_code,
+        "clan_id": clan_id, "tier": tier, "status": "RUNNING",
+        "created_at": int(time.time()), "gained_exp": 0,
     }
     panel_db.groups[gid] = group
     panel_db.log_activity(u["username"], "start", gid, clan_id, f"Launched {reg_code} group")
-
     if bot_state.account_credentials:
         for ad in list(bot_state.account_credentials.values()):
             if ad.get("token"):
                 asyncio.create_task(join_clan(ad["token"], clan_id))
     elif not bot_state.creating:
         asyncio.create_task(create_four_accounts(reg_code, clan_id, 2, "SINGH"))
-
     return aiohttp.web.json_response({"ok": True, "success": True, "group": group})
 
 async def api_client_group_action(request):
@@ -3646,25 +3524,16 @@ async def api_client_group_action(request):
     g = panel_db.groups.get(gid)
     if not g or (g.get("owner") != u["username"] and u.get("role") != "admin"):
         return aiohttp.web.json_response({"error": "Group not found"}, status=404)
-
     owner = panel_db.users.get(g["owner"], u)
     if action == "refund":
-        old_b = owner.get("basic_credits", 0)
-        old_p = owner.get("premium_credits", 0)
         ctype = g.get("tier", "basic")
         if ctype == "premium":
-            owner["premium_credits"] = old_p + 1
+            owner["premium_credits"] = owner.get("premium_credits", 0) + 1
         else:
-            owner["basic_credits"] = old_b + 1
+            owner["basic_credits"] = owner.get("basic_credits", 0) + 1
         del panel_db.groups[gid]
-        panel_db.log_activity(u["username"], "refund", gid, g.get("clan_id", ""), "Group refunded (+1 credit)")
-        return aiohttp.web.json_response({
-            "success": True,
-            "message": "Group refunded and 1 credit restored!",
-            "credit_type": ctype,
-            "old_basic": old_b, "new_basic": owner.get("basic_credits", 0),
-            "old_premium": old_p, "new_premium": owner.get("premium_credits", 0),
-        })
+        panel_db.log_activity(u["username"], "refund", gid, g.get("clan_id", ""), "Group refunded")
+        return aiohttp.web.json_response({"success": True, "message": "Group refunded and 1 credit restored!"})
     elif action == "stop":
         g["status"] = "STOPPED"
         panel_db.log_activity(u["username"], "stop", gid, g.get("clan_id", ""), "Group stopped")
@@ -3673,7 +3542,6 @@ async def api_client_group_action(request):
         del panel_db.groups[gid]
         panel_db.log_activity(u["username"], "delete", gid, g.get("clan_id", ""), "Group deleted")
         return aiohttp.web.json_response({"success": True, "message": "Group deleted"})
-
     return aiohttp.web.json_response({"error": "Unknown action"}, status=400)
 
 async def api_client_glory_progression(request):
@@ -3689,22 +3557,16 @@ async def api_client_glory_progression(request):
     uptime_h = max(0.1, (time.time() - g.get("created_at", bot_state.start_time)) / 3600.0)
     return aiohttp.web.json_response({
         "clan_data": {
-            "clan_name": "DG DRIFT",
-            "clan_level": 4,
-            "member_num": len(bot_state.accounts) or 2,
-            "capacity": 50,
-            "region": region,
-            "slogan": f"Clan ID: {clan_id}"
+            "clan_name": "DG DRIFT", "clan_level": 4,
+            "member_num": len(bot_state.accounts) or 2, "capacity": 50,
+            "region": region, "slogan": f"Clan ID: {clan_id}"
         },
         "final_glory": {"total_glory": total_glory},
         "glory_farmed": gained,
-        "snapshots": [
-            {
-                "captured_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-                "uptime_hours": uptime_h,
-                "total_glory": total_glory
-            }
-        ]
+        "snapshots": [{
+            "captured_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            "uptime_hours": uptime_h, "total_glory": total_glory
+        }]
     })
 
 async def api_client_refetch_clan_data(request):
@@ -3738,25 +3600,17 @@ async def api_buy_credits(request):
     amount = round(basic * panel_db.settings["basic_credit_usd"] + premium * panel_db.settings["premium_credit_usd"], 2)
     tx = {
         "id": "TX-" + uuid.uuid4().hex[:8].upper(),
-        "username": u["username"],
-        "basic_credits": basic,
-        "premium_credits": premium,
-        "amount": amount,
-        "order_id": order_id,
-        "status": "pending",
-        "verified": False,
+        "username": u["username"], "basic_credits": basic,
+        "premium_credits": premium, "amount": amount, "order_id": order_id,
+        "status": "pending", "verified": False,
         "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     }
     panel_db.transactions.insert(0, tx)
     panel_db.save()
     return aiohttp.web.json_response({
-        "ok": True,
-        "verified": False,
-        "transaction_id": tx["id"],
-        "order_id": order_id,
-        "basic_credits": basic,
-        "premium_credits": premium,
-        "amount": amount,
+        "ok": True, "verified": False, "transaction_id": tx["id"],
+        "order_id": order_id, "basic_credits": basic,
+        "premium_credits": premium, "amount": amount,
     })
 
 async def api_cancel_transaction(request):
@@ -3767,8 +3621,7 @@ async def api_cancel_transaction(request):
     for t in panel_db.transactions:
         if t["id"] == tx_id and (t["username"] == u["username"] or u.get("role") == "admin"):
             if t["status"] == "pending":
-                t["status"] = "cancelled"
-                panel_db.save()
+                t["status"] = "cancelled"; panel_db.save()
                 return aiohttp.web.json_response({"ok": True})
     return aiohttp.web.json_response({"error": "Transaction not found"}, status=404)
 
@@ -3795,16 +3648,11 @@ async def api_coupons_create(request):
         return aiohttp.web.json_response({"error": "Select at least 1 credit"}, status=400)
     if u.get("basic_credits", 0) < basic or u.get("premium_credits", 0) < premium:
         return aiohttp.web.json_response({"error": "Insufficient credits"}, status=400)
-    u["basic_credits"] -= basic
-    u["premium_credits"] -= premium
+    u["basic_credits"] -= basic; u["premium_credits"] -= premium
     code = _gen_coupon_code()
     coupon = {
-        "code": code,
-        "basic_credits": basic,
-        "premium_credits": premium,
-        "created_by": u["username"],
-        "status": "active",
-        "used_by": None,
+        "code": code, "basic_credits": basic, "premium_credits": premium,
+        "created_by": u["username"], "status": "active", "used_by": None,
         "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "used_at": None,
     }
@@ -3832,15 +3680,13 @@ async def api_coupons_redeem(request):
     c = panel_db.coupons.get(code)
     if not c or c.get("status") != "active":
         return aiohttp.web.json_response({"error": "Invalid or already used coupon code"}, status=400)
-    c["status"] = "used"
-    c["used_by"] = u["username"]
+    c["status"] = "used"; c["used_by"] = u["username"]
     c["used_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     u["basic_credits"] = u.get("basic_credits", 0) + c.get("basic_credits", 0)
     u["premium_credits"] = u.get("premium_credits", 0) + c.get("premium_credits", 0)
     panel_db.save()
     return aiohttp.web.json_response({
-        "success": True,
-        "basic_credits": c.get("basic_credits", 0),
+        "success": True, "basic_credits": c.get("basic_credits", 0),
         "premium_credits": c.get("premium_credits", 0),
     })
 
@@ -3863,14 +3709,12 @@ async def api_inbox_messages(request):
     if not u: return aiohttp.web.json_response([])
     return aiohttp.web.json_response(panel_db.inbox)
 
-async def api_inbox_noop(request):
-    return aiohttp.web.json_response({"ok": True})
+async def api_inbox_noop(request): return aiohttp.web.json_response({"ok": True})
 
 async def api_notifications(request):
     u = _get_current_user(request)
     if not u: return aiohttp.web.json_response([])
-    notifs = panel_db.notifications.pop(u["username"], [])
-    return aiohttp.web.json_response(notifs)
+    return aiohttp.web.json_response(panel_db.notifications.pop(u["username"], []))
 
 async def api_client_active_alert(request):
     return aiohttp.web.json_response(panel_db.active_alert or {})
@@ -3889,14 +3733,9 @@ async def api_guildinfo(request):
     initial_xp = sum(a.get("initial_exp", 0) for a in bot_state.accounts.values())
     current_xp = initial_xp + gained
     return aiohttp.web.json_response({
-        "clan_name": "DG DRIFT",
-        "clan_id": guild_id,
-        "region": region,
-        "clan_level": 4,
-        "old_xp": initial_xp,
-        "Total guild xp": current_xp,
-        "xp": current_xp,
-        "gained_exp": gained,
+        "clan_name": "DG DRIFT", "clan_id": guild_id, "region": region,
+        "clan_level": 4, "old_xp": initial_xp, "Total guild xp": current_xp,
+        "xp": current_xp, "gained_exp": gained,
     })
 
 async def api_logs_get(request):
@@ -3963,6 +3802,9 @@ async def api_progress(request):
     lines = [str(x) for x in bot_state.create_progress[-60:]]
     return aiohttp.web.json_response({"creating": bool(bot_state.creating), "create_progress": lines})
 
+# ─────────────────────────────────────────────────────────────
+#   CRITICAL FIX: force override + cleanup
+# ─────────────────────────────────────────────────────────────
 async def api_create_team(request):
     try:
         body = await request.json()
@@ -3970,18 +3812,39 @@ async def api_create_team(request):
         clan_id = str(body.get("clan_id", "")).strip()
         count = max(1, min(2, int(body.get("count", 2))))
         password = str(body.get("password", "SINGH")).strip() or "SINGH"
+        force = bool(body.get("force", False))
+
         if not clan_id:
             return aiohttp.web.json_response({"ok": False, "error": "clan_id required"})
         if bot_state.creating:
             return aiohttp.web.json_response({"ok": False, "error": "already creating"})
 
-        # ── Guard: prevent multiple squads running simultaneously ──
-        existing_active = [u for u, t in bot_state.account_workers.items() if t and not t.done()]
-        if existing_active:
+        # ── Guard: prevent multiple squads unless force=True ──
+        existing_active = [u for u, t in bot_state.account_workers.items()
+                           if t and not t.done()]
+        if existing_active and not force:
             return aiohttp.web.json_response({
                 "ok": False,
-                "error": f"{len(existing_active)} bot(s) already running. Delete them from UI first before creating a new squad."
+                "error": f"{len(existing_active)} bot(s) already running. Send force=true to override, or restart the service."
             })
+
+        # ── Force kill existing bots ──
+        if existing_active and force:
+            print_warning(f"[FORCE] Cancelling {len(existing_active)} existing bot(s) to spawn new squad")
+            for u in existing_active:
+                task = bot_state.account_workers.get(u)
+                if task:
+                    try: task.cancel()
+                    except Exception: pass
+            bot_state.account_workers.clear()
+            bot_state.accounts.clear()
+            bot_state.account_credentials.clear()
+            bot_state.paused.clear()
+            _team_state["peers"].clear()
+            _team_state["leader_uid"] = None
+            _team_state["team_code"] = None
+            await asyncio.sleep(2.0)
+            print_success("[FORCE] Cleanup complete, spawning fresh squad...")
 
         asyncio.create_task(create_four_accounts(region, clan_id, count, password))
         return aiohttp.web.json_response({"ok": True, "msg": f"creating {count} bots for {region}"})
@@ -4125,7 +3988,6 @@ async def start_web_server():
     app.router.add_get("/login.html", handle_login_pg)
     app.router.add_get("/signup", handle_login_pg)
     app.router.add_get("/signup.html", handle_login_pg)
-
     app.router.add_get("/shared.css", handle_shared_css)
     app.router.add_get("/shared.js", handle_shared_js)
     app.router.add_get("/login.js", handle_login_js)
@@ -4136,6 +3998,7 @@ async def start_web_server():
     if os.path.exists("static"):
         app.router.add_static("/static/", path="static", name="static")
 
+    # Auth
     app.router.add_post("/api/auth/login", api_auth_login)
     app.router.add_post("/api/auth/signup", api_auth_signup)
     app.router.add_post("/api/auth/logout", api_auth_logout)
@@ -4143,6 +4006,7 @@ async def start_web_server():
     app.router.add_post("/api/auth/change-password", api_auth_change_password)
     app.router.add_get("/api/me", api_me)
 
+    # Admin
     app.router.add_get("/api/admin/overview", api_admin_overview)
     app.router.add_get("/api/admin/users", api_admin_users)
     app.router.add_post("/api/admin/user/create", api_admin_user_create)
@@ -4156,6 +4020,7 @@ async def start_web_server():
     app.router.add_post("/api/admin/join-clan", api_admin_join_clan)
     app.router.add_post("/api/admin/group-action", api_client_group_action)
 
+    # Client
     app.router.add_get("/api/pricing", api_pricing)
     app.router.add_get("/api/public/contact-info", api_public_contact_info)
     app.router.add_get("/api/vapid-public-key", api_vapid_public_key)
@@ -4183,6 +4048,7 @@ async def start_web_server():
     app.router.add_get("/api/client/active-alert", api_client_active_alert)
     app.router.add_post("/api/client/dismiss-alert", api_client_dismiss_alert)
 
+    # Bot dashboard
     app.router.add_get("/api/ping", api_ping)
     app.router.add_get("/api/guildinfo", api_guildinfo)
     app.router.add_get("/api/logs", api_logs_get)
@@ -4220,8 +4086,6 @@ async def main():
         return
 
     # ── AUTO-LOAD DISABLED ──
-    # Only newly-created bots from Create Squad will run.
-    # _autoload_accounts() is intentionally NOT called.
     print_info("[BOOT] ✓ Auto-load disabled — waiting for Create Squad to spawn fresh bots")
 
     try:
